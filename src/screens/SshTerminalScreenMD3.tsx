@@ -32,7 +32,6 @@ const XTERM_HTML = `
   .xterm { height: 100%; }
 </style>
 <link rel="stylesheet" href="file:///android_asset/xterm.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
 </head>
 <body>
 <div id="terminal"></div>
@@ -76,13 +75,13 @@ const XTERM_HTML = `
 
       window.term.onData(function(data) {
         // Local echo dengan handling khusus untuk backspace/delete
-        if (data === '\x7f' || data === '\b') {
+        if (data === '\\x7f' || data === '\\b') {
           // Backspace: mundur, hapus char, mundur lagi
-          window.term.write('\b \b');
-        } else if (data === '\r') {
+          window.term.write('\\b \\b');
+        } else if (data === '\\r') {
           // Enter: pindah baris
-          window.term.write('\r\n');
-        } else if (data.charCodeAt(0) < 32 && data !== '\t') {
+          window.term.write('\\r\\n');
+        } else if (data.charCodeAt(0) < 32 && data !== '\\t') {
           // Skip control chars lain (kecuali tab)
         } else {
           window.term.write(data);

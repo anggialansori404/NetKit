@@ -24,6 +24,10 @@ react {
     // debuggableVariants = ["liteDebug", "liteDebugOptimized", "prodDebug", "prodDebugOptimized"]
 
     /* Bundling */
+    //   Bundle the JS even for debuggable variants (debug APK works standalone,
+    //   no Metro needed). Default is false (expects Metro dev server).
+    bundleInDebug = true
+    //
     //   A list containing the node command and its flags. Default is just 'node'.
     // nodeExecutableAndArgs = ["node"]
     //

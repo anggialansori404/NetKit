@@ -24,6 +24,7 @@ import { ClientFormScreenMD3 } from './src/screens/ClientFormScreenMD3';
 import { ToolDetailScreenMD3 } from './src/screens/ToolDetailScreenMD3';
 import { ToolRunnerScreenMD3 } from './src/screens/ToolRunnerScreenMD3';
 import { PengaturanScreenMD3 } from './src/screens/PengaturanScreenMD3';
+import { SessionFormScreenMD3 } from './src/screens/SessionFormScreenMD3';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -46,8 +47,9 @@ function MainTabs({ navigation }: any) {
   const handleFabPress = () => {
     if (activeTab === 'KlienTab') {
       navigation.navigate('ClientForm', {});
+    } else if (activeTab === 'SSHTab' || activeTab === 'SFTPTab') {
+      navigation.navigate('SessionForm', {});
     }
-    // SSH/SFTP: tambah sesi bisa lewat layar masing-masing nanti
   };
 
   return (
@@ -85,7 +87,7 @@ function MainTabs({ navigation }: any) {
         <Tab.Screen name="SSHTab" component={SshScreenMD3} options={{ title: 'SSH' }} />
         <Tab.Screen name="SFTPTab" component={SftpScreenMD3} options={{ title: 'SFTP' }} />
       </Tab.Navigator>
-      {activeTab === 'KlienTab' && (
+      {activeTab !== 'ToolsTab' && (
         <FAB
           icon="plus"
           style={styles.fab}
@@ -125,6 +127,7 @@ export default function App() {
             <Stack.Screen name="ToolDetail" component={ToolDetailScreenMD3} />
             <Stack.Screen name="ToolRunner" component={ToolRunnerScreenMD3} />
             <Stack.Screen name="Settings" component={PengaturanScreenMD3} />
+            <Stack.Screen name="SessionForm" component={SessionFormScreenMD3} />
           </Stack.Navigator>
         </NavigationContainer>
       </PaperProvider>

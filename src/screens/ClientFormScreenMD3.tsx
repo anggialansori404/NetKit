@@ -8,9 +8,12 @@ import {
   Appbar,
   TextInput,
   Button,
+  SegmentedButtons,
+  Text,
   useTheme,
 } from 'react-native-paper';
 import { store } from '../storage/storage-sqlite';
+import { isPrivateIp } from '../engine/network';
 
 export function ClientFormScreenMD3({ navigation, route }: any) {
   const theme = useTheme();
@@ -23,6 +26,10 @@ export function ClientFormScreenMD3({ navigation, route }: any) {
   const [port, setPort] = useState(existing ? String(existing.port) : '22');
   const [ipVpn, setIpVpn] = useState(existing?.ipVpn || '');
   const [catatan, setCatatan] = useState(existing?.catatan || '');
+  // ipJenis: manual override, '' = auto-detect
+  const [ipJenis, setIpJenis] = useState<'lokal' | 'publik' | ''>(
+    existing?.ipJenis || ''
+  );
 
   const handleSave = () => {
     if (!nama.trim() || !ip.trim()) return;
@@ -32,6 +39,7 @@ export function ClientFormScreenMD3({ navigation, route }: any) {
       ipGateway: ip.trim(),
       port: parseInt(port, 10) || 22,
       ipVpn: ipVpn.trim(),
+      ipJenis: ipJenis || undefined,
       catatan: catatan.trim(),
     };
     if (existing) {
@@ -95,6 +103,27 @@ export function ClientFormScreenMD3({ navigation, route }: any) {
           autoCorrect={false}
           style={styles.input}
         />
+
+        <Text variant="labelLarge" style={styles.label}>
+          Jenis IP Gateway
+        </Text>
+        <SegmentedButtons
+          value={ipJenis}
+          onValueChange={(v) => setIpJenis(v as 'lokal' | 'publik' | '')}
+          buttons={[
+            { value: '', label: 'Otomatis' },
+            { value: 'lokal', label: 'Lokal' },
+            { value: 'publik', label: 'Publik' },
+          ]}
+          style={styles.input}
+        />
+        {ip.trim() ? (
+          <Text variant="bodySmall" style={styles.hint}>
+            Terdeteksi: {isPrivateIp(ip.trim()) ? 'lokal' : 'publik'}
+            {ipJenis ? ` · dipakai: ${ipJenis}` : ' · dipakai: otomatis'}
+          </Text>
+        ) : null}
+
         <TextInput
           label="Catatan (opsional)"
           value={catatan}
@@ -117,5 +146,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16 },
   input: { marginBottom: 12 },
+  label: { marginBottom: 8, opacity: 0.7 },
+  hint: { marginTop: -8, marginBottom: 12, opacity: 0.6 },
   save: { marginTop: 8 },
 });

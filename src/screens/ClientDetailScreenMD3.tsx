@@ -31,7 +31,7 @@ export function ClientDetailScreenMD3({ navigation, route }: any) {
     );
   }
 
-  const lokal = isPrivateIp(client.ipGateway);
+  const lokal = client.ipJenis ? client.ipJenis === 'lokal' : isPrivateIp(client.ipGateway);
 
   const rows = [
     { label: 'Nama BPR', value: client.namaBpr },

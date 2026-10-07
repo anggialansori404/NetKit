@@ -16,6 +16,7 @@ export interface Client {
   port: number;
   ipVpn: string;
   catatan?: string;
+  ipJenis?: 'lokal' | 'publik'; // manual override, kosong = auto-detect via isPrivateIp
   createdAt: string;
   updatedAt: string;
 }
@@ -58,6 +59,7 @@ function initTables(database: DB) {
       ipGateway TEXT NOT NULL,
       port INTEGER DEFAULT 22,
       ipVpn TEXT,
+      ipJenis TEXT,
       catatan TEXT,
       createdAt TEXT,
       updatedAt TEXT
@@ -113,15 +115,15 @@ export function saveClient(
   if (client.id) {
     const existing = getClientById(client.id);
     database.executeSync(
-      `UPDATE clients SET namaBpr=?, alamat=?, ipGateway=?, port=?, ipVpn=?, catatan=?, updatedAt=? WHERE id=?`,
-      [client.namaBpr, client.alamat, client.ipGateway, client.port, client.ipVpn, client.catatan || '', now, client.id]
+      `UPDATE clients SET namaBpr=?, alamat=?, ipGateway=?, port=?, ipVpn=?, ipJenis=?, catatan=?, updatedAt=? WHERE id=?`,
+      [client.namaBpr, client.alamat, client.ipGateway, client.port, client.ipVpn, client.ipJenis || '', client.catatan || '', now, client.id]
     );
     return { ...existing!, ...client, id: client.id, updatedAt: now };
   } else {
     const id = genId('c');
     database.executeSync(
-      `INSERT INTO clients (id, namaBpr, alamat, ipGateway, port, ipVpn, catatan, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, client.namaBpr, client.alamat, client.ipGateway, client.port, client.ipVpn, client.catatan || '', now, now]
+      `INSERT INTO clients (id, namaBpr, alamat, ipGateway, port, ipVpn, ipJenis, catatan, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, client.namaBpr, client.alamat, client.ipGateway, client.port, client.ipVpn, client.ipJenis || '', client.catatan || '', now, now]
     );
     return { ...client, id, createdAt: now, updatedAt: now };
   }

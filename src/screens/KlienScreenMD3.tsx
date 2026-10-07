@@ -61,7 +61,7 @@ export function KlienScreenMD3({ navigation }: any) {
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
-          const lokal = isPrivateIp(item.ipGateway);
+          const lokal = item.ipJenis ? item.ipJenis === 'lokal' : isPrivateIp(item.ipGateway);
           return (
             <>
               <List.Item

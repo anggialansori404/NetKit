@@ -110,7 +110,7 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
   const [showPassword, setShowPassword] = useState(false);
   const [terminalReady, setTerminalReady] = useState(false);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
-  const [showDebug, setShowDebug] = useState(false);
+  const [showDebug, setShowDebug] = useState(true);
   const sshClientRef = useRef<any>(null);
 
   // Tambah log ke debug panel native (selalu terlihat, tidak bergantung WebView)
@@ -146,11 +146,9 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
       webviewRef.current?.postMessage(JSON.stringify({ type: 'data', data }));
     } catch (e) {}
     // SELALU catat ke debug log native (fallback jika WebView gagal)
-    // Hanya untuk pesan [DEBUG] agar tidak duplikat output terminal biasa
-    if (data.includes('[DEBUG]')) {
-      // Strip ANSI codes untuk tampilan native
-      const clean = data.replace(/\x1b\[[0-9;]*m/g, '').trim();
-      if (clean) addDebugLog(clean);
+    const clean = data.replace(/\x1b\[[0-9;]*m/g, '').trim();
+    if (clean) {
+      addDebugLog(clean);
     }
   };
 
@@ -233,10 +231,16 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
       sshClientRef.current = client;
 
       await client.startShell(PtyType.XTERM);
+      addDebugLog('Shell dibuka, menunggu output...');
       sendToTerminal('[DEBUG] Shell dibuka.\r\n');
 
       client.on('Shell', (event: any) => {
-        if (event) sendToTerminal(event);
+        // Native kirim {name, key, value} — ambil value-nya saja
+        const output = typeof event === 'string' ? event : event?.value;
+        if (output) {
+          addDebugLog(`[SHELL] ${output.substring(0, 100)}`);
+          sendToTerminal(output);
+        }
       });
 
       setConnected(true);

@@ -19,21 +19,21 @@ import {
   Share,
   Platform,
 } from 'react-native';
-import { theme } from '../ui/theme.js';
+import { theme } from '../ui/theme';
 import {
   InstrumentHeader,
   ChunkyButton,
   LogBlock,
-} from '../ui/components.js';
-import { store, ToolRun } from '../storage/storage.js';
+} from '../ui/components';
+import { store, ToolRun } from '../storage/storage';
 import {
   formatSharePing,
   formatShareTelnet,
   formatShareDns,
   formatShareHttpSsl,
   formatTimeOnly,
-} from '../engine/network.js';
-import { NetKitNative } from '../native/index.js';
+} from '../engine/network';
+import { NetKitNative } from '../native/index';
 
 interface ToolDetailScreenProps {
   tool: 'PING' | 'TELNET' | 'DNS' | 'HTTP/SSL';

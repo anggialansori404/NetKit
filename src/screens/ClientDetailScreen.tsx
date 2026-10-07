@@ -16,19 +16,19 @@ import {
   Share,
   Alert,
 } from 'react-native';
-import { theme } from '../ui/theme.js';
+import { theme } from '../ui/theme';
 import {
   InstrumentHeader,
   SpecSheet,
   ChunkyButton,
   LogBlock,
-} from '../ui/components.js';
-import { Client, store } from '../storage/storage.js';
+} from '../ui/components';
+import { Client, store } from '../storage/storage';
 import {
   isPrivateIp,
   runTelnet,
   formatShareTelnet,
-} from '../engine/network.js';
+} from '../engine/network';
 
 interface ClientDetailScreenProps {
   client: Client;

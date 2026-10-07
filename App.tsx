@@ -5,17 +5,17 @@
 
 import React, { useState } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
-import { theme } from './src/ui/theme.js';
-import { WavyNavBar } from './src/ui/components.js';
-import { store, Client, ToolRun } from './src/storage/storage.js';
-import { KlienScreen } from './src/screens/KlienScreen.js';
-import { ClientDetailScreen } from './src/screens/ClientDetailScreen.js';
-import { ClientFormScreen } from './src/screens/ClientFormScreen.js';
-import { ToolsScreen } from './src/screens/ToolsScreen.js';
-import { ToolDetailScreen } from './src/screens/ToolDetailScreen.js';
-import { SshScreen } from './src/screens/SshScreen.js';
-import { SftpScreen } from './src/screens/SftpScreen.js';
-import { PengaturanScreen } from './src/screens/PengaturanScreen.js';
+import { theme } from './src/ui/theme';
+import { WavyNavBar } from './src/ui/components';
+import { store, Client, ToolRun } from './src/storage/storage';
+import { KlienScreen } from './src/screens/KlienScreen';
+import { ClientDetailScreen } from './src/screens/ClientDetailScreen';
+import { ClientFormScreen } from './src/screens/ClientFormScreen';
+import { ToolsScreen } from './src/screens/ToolsScreen';
+import { ToolDetailScreen } from './src/screens/ToolDetailScreen';
+import { SshScreen } from './src/screens/SshScreen';
+import { SftpScreen } from './src/screens/SftpScreen';
+import { PengaturanScreen } from './src/screens/PengaturanScreen';
 
 type Tab = 'Klien' | 'Tools' | 'SSH' | 'SFTP';
 

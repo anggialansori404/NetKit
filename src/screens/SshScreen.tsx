@@ -17,15 +17,15 @@ import {
   TextInput,
   Modal,
 } from 'react-native';
-import { theme } from '../ui/theme.js';
+import { theme } from '../ui/theme';
 import {
   InstrumentHeader,
   SessionRow,
   TerminalView,
   ChunkyButton,
-} from '../ui/components.js';
-import { store, SshSession } from '../storage/storage.js';
-import { isValidIpv4, isValidPort } from '../engine/network.js';
+} from '../ui/components';
+import { store, SshSession } from '../storage/storage';
+import { isValidIpv4, isValidPort } from '../engine/network';
 
 interface SshScreenProps {
   onOpenSettings: () => void;

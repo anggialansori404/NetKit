@@ -14,14 +14,14 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { theme } from '../ui/theme.js';
+import { theme } from '../ui/theme';
 import {
   InstrumentHeader,
   SessionRow,
   FileRow,
   ChunkyButton,
-} from '../ui/components.js';
-import { store, SshSession } from '../storage/storage.js';
+} from '../ui/components';
+import { store, SshSession } from '../storage/storage';
 
 interface SftpItem {
   name: string;

@@ -5,14 +5,14 @@
 
 import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, Text } from 'react-native';
-import { theme } from '../ui/theme.js';
+import { theme } from '../ui/theme';
 import {
   InstrumentHeader,
   TerminalSearch,
   ClientRow,
-} from '../ui/components.js';
-import { store, Client } from '../storage/storage.js';
-import { isPrivateIp } from '../engine/network.js';
+} from '../ui/components';
+import { store, Client } from '../storage/storage';
+import { isPrivateIp } from '../engine/network';
 
 interface KlienScreenProps {
   onSelectClient: (client: Client) => void;

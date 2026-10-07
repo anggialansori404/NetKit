@@ -15,9 +15,9 @@ import {
   Share,
   TouchableOpacity,
 } from 'react-native';
-import { theme } from '../ui/theme.js';
-import { ChunkyButton, LogBlock } from '../ui/components.js';
-import { store } from '../storage/storage.js';
+import { theme } from '../ui/theme';
+import { ChunkyButton, LogBlock } from '../ui/components';
+import { store } from '../storage/storage';
 import {
   runPing,
   runTelnet,
@@ -28,7 +28,7 @@ import {
   formatShareDns,
   formatShareHttpSsl,
   isValidPort,
-} from '../engine/network.js';
+} from '../engine/network';
 
 interface ToolRunnerScreenProps {
   tool: 'PING' | 'TELNET' | 'DNS' | 'HTTP/SSL';

@@ -12,14 +12,14 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
-import { theme } from '../ui/theme.js';
-import { InstrumentHeader, ChunkyButton } from '../ui/components.js';
-import { Client, store } from '../storage/storage.js';
+import { theme } from '../ui/theme';
+import { InstrumentHeader, ChunkyButton } from '../ui/components';
+import { Client, store } from '../storage/storage';
 import {
   isValidIpv4,
   isValidPort,
   isPrivateIp,
-} from '../engine/network.js';
+} from '../engine/network';
 
 interface ClientFormScreenProps {
   initialClient?: Client | null;

@@ -13,9 +13,9 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { theme } from '../ui/theme.js';
-import { InstrumentHeader, ToolCard } from '../ui/components.js';
-import { store, ToolRun } from '../storage/storage.js';
+import { theme } from '../ui/theme';
+import { InstrumentHeader, ToolCard } from '../ui/components';
+import { store, ToolRun } from '../storage/storage';
 
 interface ToolsScreenProps {
   onSelectTool: (tool: 'PING' | 'TELNET' | 'DNS' | 'HTTP/SSL') => void;

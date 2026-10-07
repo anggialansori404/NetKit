@@ -17,9 +17,9 @@ import {
   TouchableOpacity,
   Modal,
 } from 'react-native';
-import { theme } from '../ui/theme.js';
-import { ChunkyButton } from '../ui/components.js';
-import { store } from '../storage/storage.js';
+import { theme } from '../ui/theme';
+import { ChunkyButton } from '../ui/components';
+import { store } from '../storage/storage';
 
 interface PengaturanScreenProps {
   onBack: () => void;

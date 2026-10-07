@@ -16,7 +16,7 @@ import {
   ViewStyle,
   ScrollView,
 } from 'react-native';
-import { theme } from './theme.js';
+import { theme } from './theme';
 
 // 1. InstrumentHeader
 // Wordmark + 3 stat (angka mono besar + micro label); slot aksi kanan (gear)

@@ -72,15 +72,14 @@ export function KlienScreenMD3({ navigation }: any) {
                 onPress={() => navigation.navigate('ClientDetail', { clientId: item.id })}
                 right={() => (
                   <View style={styles.rightMeta}>
-                    <Text variant="bodyMedium" style={styles.mono}>
+                    <Text variant="bodyMedium" >
                       {item.ipGateway}:{item.port}
                     </Text>
                     <Text
                       variant="labelSmall"
-                      style={[
-                        styles.mono,
-                        { color: lokal ? theme.colors.secondary : theme.colors.primary },
-                      ]}
+                      style={{
+                        color: lokal ? theme.colors.secondary : theme.colors.primary,
+                      }}
                     >
                       {lokal ? '·lokal' : '·publik'}
                     </Text>
@@ -112,6 +111,5 @@ const styles = StyleSheet.create({
   listContent: { paddingBottom: 96 },
   listItem: { paddingVertical: 4, paddingHorizontal: 8 },
   rightMeta: { alignItems: 'flex-end', justifyContent: 'center' },
-  mono: { fontFamily: 'monospace' },
   empty: { padding: 24, alignItems: 'center' },
 });

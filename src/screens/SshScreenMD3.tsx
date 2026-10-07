@@ -44,7 +44,7 @@ export function SshScreenMD3({ navigation }: any) {
               <List.Item
                 title={item.nama}
                 description={`${item.user}@${item.host}:${item.port}`}
-                descriptionStyle={styles.mono}
+                descriptionStyle={undefined}
                 right={() => <List.Icon icon="chevron-right" />}
                 onPress={() => navigation.navigate('ToolRunner', { tool: 'SSH', sessionId: item.id })}
                 style={styles.item}
@@ -76,7 +76,6 @@ const styles = StyleSheet.create({
   content: { flex: 1, padding: 12, paddingBottom: 96 },
   sectionTitle: { marginVertical: 8, opacity: 0.7 },
   item: { paddingVertical: 2 },
-  mono: { fontFamily: 'monospace', fontSize: 12 },
   empty: { padding: 16 },
   addButton: { marginTop: 12 },
 });

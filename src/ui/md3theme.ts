@@ -1,35 +1,27 @@
 /**
- * NetKit MD3 Theme — Material Design 3 by Google
- * Base: react-native-paper MD3LightTheme, customized for NetKit.
- * Density: compact (user feedback: custom UI "gak compact").
+ * NetKit MD3 Theme — STRICT Material Design 3 baseline
+ * Sumber: https://m3.material.io/ (baseline light scheme, seed #6750A4)
+ *
+ * Prinsip: pakai MD3LightTheme dari react-native-paper TANPA kustomisasi
+ * warna. Ini adalah implementasi resmi baseline MD3 untuk React Native.
+ * Kustomisasi hanya di level yang diizinkan MD3 (mis. density via props).
  */
 
-import { MD3LightTheme, configureFonts } from 'react-native-paper';
+import { MD3LightTheme } from 'react-native-paper';
 
-const fontConfig = {
-  // Use system fonts for reliability; Paper handles the MD3 type scale.
-  fontFamily: 'sans-serif',
-} as const;
-
+// Strict baseline: tidak ada override warna.
+// MD3LightTheme sudah berisi token resmi:
+//   primary #6750A4, onPrimary #FFFFFF,
+//   primaryContainer #EADDFF, onPrimaryContainer #21005D,
+//   secondary #625B71, tertiary #7D5260,
+//   surface #FEF7FF, onSurface #1D1B20,
+//   surfaceContainerLowest #FFFFFF … surfaceContainerHighest #E6E0E9,
+//   outline #79747E, outlineVariant #CAC4D0,
+//   error #B3261E, dst.
+// Shape scale MD3: 0 / 4 / 8 / 12 / 16 / 28 / full (di-handle Paper).
+// Type scale MD3: display/headline/title/label/body (via <Text variant>).
 export const md3Theme = {
   ...MD3LightTheme,
-  // Brand: deep blue primary (from original NetKit identity)
-  colors: {
-    ...MD3LightTheme.colors,
-    primary: '#0B5FFF',
-    onPrimary: '#FFFFFF',
-    primaryContainer: '#E2EEFF',
-    onPrimaryContainer: '#001D35',
-    secondary: '#5C6470',
-    surface: '#FFFFFF',
-    surfaceVariant: '#F6F6F3',
-    background: '#F6F6F3',
-    outline: '#E0E2E8',
-  },
-  // Compact density: tighter spacing than default MD3
-  // (applied via component props like `density="compact"` where supported,
-  // and reduced content padding in screens)
-  fonts: configureFonts({ config: fontConfig }),
 };
 
 export type MD3Theme = typeof md3Theme;

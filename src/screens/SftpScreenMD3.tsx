@@ -43,7 +43,7 @@ export function SftpScreenMD3({ navigation }: any) {
               <List.Item
                 title={item.nama}
                 description={`${item.user}@${item.host}:${item.port}`}
-                descriptionStyle={styles.mono}
+                descriptionStyle={undefined}
                 left={() => <List.Icon icon="folder" />}
                 right={() => <List.Icon icon="chevron-right" />}
                 onPress={() => {}}
@@ -68,6 +68,5 @@ const styles = StyleSheet.create({
   content: { flex: 1, padding: 12, paddingBottom: 96 },
   sectionTitle: { marginVertical: 8, opacity: 0.7 },
   item: { paddingVertical: 2 },
-  mono: { fontFamily: 'monospace', fontSize: 12 },
   empty: { padding: 16 },
 });

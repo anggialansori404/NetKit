@@ -109,7 +109,7 @@ export function ToolRunnerScreenMD3({ navigation, route }: any) {
               <Text variant="labelSmall" style={styles.resultLabel}>
                 HASIL
               </Text>
-              <Text variant="bodySmall" style={styles.mono} selectable>
+              <Text variant="bodySmall"  selectable>
                 {output}
               </Text>
             </Card.Content>
@@ -127,5 +127,4 @@ const styles = StyleSheet.create({
   loading: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 },
   resultCard: { marginTop: 16 },
   resultLabel: { opacity: 0.6, marginBottom: 8 },
-  mono: { fontFamily: 'monospace' },
 });

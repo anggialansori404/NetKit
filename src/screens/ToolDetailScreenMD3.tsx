@@ -32,11 +32,11 @@ export function ToolDetailScreenMD3({ navigation, route }: any) {
       <ScrollView contentContainerStyle={styles.content}>
         <Card>
           <Card.Content>
-            <Text variant="bodyMedium" style={styles.mono} selectable>
+            <Text variant="bodyMedium"  selectable>
               {run.ringkasan}
             </Text>
             {run.output ? (
-              <Text variant="bodySmall" style={[styles.mono, styles.output]} selectable>
+              <Text variant="bodySmall" style={undefined} selectable>
                 {run.output}
               </Text>
             ) : null}
@@ -50,6 +50,5 @@ export function ToolDetailScreenMD3({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16 },
-  mono: { fontFamily: 'monospace' },
   output: { marginTop: 12, opacity: 0.8 },
 });

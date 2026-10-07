@@ -52,7 +52,7 @@ export function ToolsScreenMD3({ navigation }: any) {
             >
               <Card.Content style={styles.cardContent}>
                 <List.Icon icon={t.icon} />
-                <Text variant="titleSmall" style={styles.mono}>{t.title}</Text>
+                <Text variant="titleSmall" >{t.title}</Text>
                 <Text variant="bodySmall" style={{ color: theme.colors.secondary }}>
                   {t.desc}
                 </Text>
@@ -74,11 +74,11 @@ export function ToolsScreenMD3({ navigation }: any) {
               <View key={run.id}>
                 <List.Item
                   title={`${run.timestamp}`}
-                  titleStyle={styles.mono}
+                  titleStyle={undefined}
                   description={run.ringkasan}
                   descriptionNumberOfLines={1}
                   left={() => (
-                    <Text variant="labelSmall" style={[styles.toolTag, { color: theme.colors.primary }]}>
+                    <Text variant="labelSmall" style={{ color: theme.colors.primary, fontWeight: '700', alignSelf: 'center', marginLeft: 8 }}>
                       {run.tool}
                     </Text>
                   )}
@@ -103,9 +103,7 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   card: { flex: 1, minWidth: '47%' },
   cardContent: { alignItems: 'flex-start', paddingVertical: 12 },
-  mono: { fontFamily: 'monospace' },
   historyCard: { marginBottom: 8 },
   historyItem: { paddingVertical: 2 },
-  toolTag: { fontFamily: 'monospace', fontWeight: '700', alignSelf: 'center', marginLeft: 8 },
   empty: { padding: 16 },
 });

@@ -34,12 +34,12 @@ export function ClientDetailScreenMD3({ navigation, route }: any) {
   const lokal = isPrivateIp(client.ipGateway);
 
   const rows = [
-    { label: 'Nama BPR', value: client.namaBpr, mono: false },
-    { label: 'Alamat', value: client.alamat, mono: false },
-    { label: 'IP Gateway', value: `${client.ipGateway} · ${lokal ? 'lokal' : 'publik'}`, mono: true },
-    { label: 'Port', value: String(client.port), mono: true },
-    { label: 'IP VPN', value: client.ipVpn || '—', mono: true },
-    { label: 'Catatan', value: client.catatan || '—', mono: false },
+    { label: 'Nama BPR', value: client.namaBpr },
+    { label: 'Alamat', value: client.alamat },
+    { label: 'IP Gateway', value: `${client.ipGateway} · ${lokal ? 'lokal' : 'publik'}` },
+    { label: 'Port', value: String(client.port) },
+    { label: 'IP VPN', value: client.ipVpn || '—' },
+    { label: 'Catatan', value: client.catatan || '—' },
   ];
 
   return (
@@ -60,7 +60,7 @@ export function ClientDetailScreenMD3({ navigation, route }: any) {
               title={r.label}
               titleStyle={styles.label}
               description={r.value}
-              descriptionStyle={r.mono ? styles.mono : undefined}
+              descriptionStyle={undefined}
               descriptionNumberOfLines={2}
             />
             {i < rows.length - 1 && <Divider />}
@@ -98,7 +98,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingBottom: 24 },
   label: { fontSize: 12, opacity: 0.6 },
-  mono: { fontFamily: 'monospace' },
   actions: { padding: 16, gap: 8 },
   button: { marginBottom: 4 },
 });

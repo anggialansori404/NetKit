@@ -4,7 +4,7 @@
  */
 
 import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { WebView } from 'react-native-webview';
 import {
   Appbar,
@@ -79,7 +79,15 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [terminalReady, setTerminalReady] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const [showDebug, setShowDebug] = useState(false);
   const sshClientRef = useRef<any>(null);
+
+  // Tambah log ke debug panel native (selalu terlihat, tidak bergantung WebView)
+  const addDebugLog = (msg: string) => {
+    const ts = new Date().toLocaleTimeString('id-ID', { hour12: false });
+    setDebugLogs((prev) => [...prev.slice(-49), `[${ts}] ${msg}`]);
+  };
 
   // Fallback: jika WebView tidak kirim 'ready' dalam 3 detik, tampilkan dialog password anyway
   useEffect(() => {
@@ -103,7 +111,17 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
   }, []);
 
   const sendToTerminal = (data: string) => {
-    webviewRef.current?.postMessage(JSON.stringify({ type: 'data', data }));
+    // Kirim ke WebView (jika siap)
+    try {
+      webviewRef.current?.postMessage(JSON.stringify({ type: 'data', data }));
+    } catch (e) {}
+    // SELALU catat ke debug log native (fallback jika WebView gagal)
+    // Hanya untuk pesan [DEBUG] agar tidak duplikat output terminal biasa
+    if (data.includes('[DEBUG]')) {
+      // Strip ANSI codes untuk tampilan native
+      const clean = data.replace(/\x1b\[[0-9;]*m/g, '').trim();
+      if (clean) addDebugLog(clean);
+    }
   };
 
   const handleMessage = (event: any) => {
@@ -144,20 +162,27 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
 
     // DEBUG: cek native module
     const { RNSSHClient } = NativeModules;
-    sendToTerminal(`[DEBUG] Native module: ${RNSSHClient ? 'ADA' : 'TIDAK ADA'}\r\n`);
+    const nativeMsg = `Native module RNSSHClient: ${RNSSHClient ? 'ADA' : 'TIDAK ADA'}`;
+    addDebugLog(nativeMsg);
+    sendToTerminal(`[DEBUG] ${nativeMsg}\r\n`);
     if (!RNSSHClient) {
-      sendToTerminal('\x1b[31m[DEBUG] RNSSHClient tidak ditemukan! Library belum ke-link.\x1b[0m\r\n');
+      const err = 'RNSSHClient tidak ditemukan! Library belum ke-link di build ini.';
+      addDebugLog(`ERROR: ${err}`);
+      sendToTerminal(`\x1b[31m[DEBUG] ${err}\x1b[0m\r\n`);
       setStatus('Gagal: native module tidak ada');
       return;
     }
 
-    sendToTerminal(`[DEBUG] Connect ke ${session.host}:${session.port} sebagai ${session.username}...\r\n`);
+    const connMsg = `Connect ke ${session.host}:${session.port} sebagai ${session.username}`;
+    addDebugLog(connMsg);
+    sendToTerminal(`[DEBUG] ${connMsg}...\r\n`);
 
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Timeout 15 detik: server tidak merespons')), 15000)
     );
 
     try {
+      addDebugLog('Memanggil connectWithPassword...');
       sendToTerminal('[DEBUG] Memanggil connectWithPassword...\r\n');
       const connectPromise = SSHClient.connectWithPassword(
         session.host,
@@ -165,8 +190,10 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
         session.username,
         pwd
       );
+      addDebugLog('Promise dibuat, menunggu (timeout 15s)...');
       sendToTerminal('[DEBUG] Promise dibuat, menunggu...\r\n');
       const client: any = await Promise.race([connectPromise, timeoutPromise]);
+      addDebugLog('Terhubung! Membuka shell...');
       sendToTerminal('[DEBUG] Terhubung! Membuka shell...\r\n');
       sshClientRef.current = client;
 
@@ -182,6 +209,7 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
       sendToTerminal('\r\n\x1b[32mTerhubung!\x1b[0m\r\n');
     } catch (e: any) {
       const msg = e.message || String(e);
+      addDebugLog(`ERROR: ${msg}`);
       sendToTerminal(`\r\n\x1b[31m[DEBUG] Error: ${msg}\x1b[0m\r\n`);
       setStatus(`Gagal: ${msg}`);
       setTimeout(() => setShowPasswordDialog(true), 1000);
@@ -222,7 +250,34 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
           title={session.nama}
           subtitle={`${session.username}@${session.host}:${session.port} · ${status}`}
         />
+        <Appbar.Action
+          icon="bug-outline"
+          onPress={() => setShowDebug(!showDebug)}
+        />
       </Appbar.Header>
+
+      {/* Debug panel native — selalu terlihat, tidak bergantung WebView */}
+      {showDebug && (
+        <View style={[styles.debugPanel, { backgroundColor: theme.colors.surfaceVariant }]}>
+          <View style={styles.debugHeader}>
+            <Text variant="labelLarge">Debug Log</Text>
+            <Button compact onPress={() => setDebugLogs([])}>Clear</Button>
+          </View>
+          <ScrollView style={styles.debugScroll}>
+            {debugLogs.length === 0 ? (
+              <Text variant="bodySmall" style={{ opacity: 0.6 }}>
+                Belum ada log. Coba hubungkan untuk melihat debug output.
+              </Text>
+            ) : (
+              debugLogs.map((log, i) => (
+                <Text key={i} variant="bodySmall" style={styles.debugText} selectable>
+                  {log}
+                </Text>
+              ))
+            )}
+          </ScrollView>
+        </View>
+      )}
 
       <WebView
         ref={webviewRef}
@@ -297,6 +352,28 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   webview: { flex: 1, backgroundColor: '#1D1B20' },
+  debugPanel: {
+    maxHeight: 200,
+    borderBottomWidth: 1,
+    borderBottomColor: '#CAC4D0',
+  },
+  debugHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  debugScroll: {
+    maxHeight: 150,
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+  },
+  debugText: {
+    fontFamily: 'monospace',
+    fontSize: 11,
+    marginBottom: 2,
+  },
   keyRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',

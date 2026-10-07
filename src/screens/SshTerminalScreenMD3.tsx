@@ -17,6 +17,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 import SSHClient, { PtyType } from '@dylankenneally/react-native-ssh-sftp';
+import { NativeModules } from 'react-native';
 import { store } from '../storage/storage-sqlite';
 
 // xterm.js HTML — terminal emulator in WebView
@@ -140,30 +141,40 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
     }
     setShowPasswordDialog(false);
     setStatus(`Menghubungkan ke ${session.host}...`);
-    sendToTerminal(`Menghubungkan ke ${session.host}:${session.port}...\r\n`);
 
-    // Timeout 15 detik
+    // DEBUG: cek native module
+    const { RNSSHClient } = NativeModules;
+    sendToTerminal(`[DEBUG] Native module: ${RNSSHClient ? 'ADA' : 'TIDAK ADA'}\r\n`);
+    if (!RNSSHClient) {
+      sendToTerminal('\x1b[31m[DEBUG] RNSSHClient tidak ditemukan! Library belum ke-link.\x1b[0m\r\n');
+      setStatus('Gagal: native module tidak ada');
+      return;
+    }
+
+    sendToTerminal(`[DEBUG] Connect ke ${session.host}:${session.port} sebagai ${session.username}...\r\n`);
+
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Timeout: server tidak merespons dalam 15 detik')), 15000)
+      setTimeout(() => reject(new Error('Timeout 15 detik: server tidak merespons')), 15000)
     );
 
     try {
+      sendToTerminal('[DEBUG] Memanggil connectWithPassword...\r\n');
       const connectPromise = SSHClient.connectWithPassword(
         session.host,
         session.port,
         session.username,
         pwd
       );
+      sendToTerminal('[DEBUG] Promise dibuat, menunggu...\r\n');
       const client: any = await Promise.race([connectPromise, timeoutPromise]);
+      sendToTerminal('[DEBUG] Terhubung! Membuka shell...\r\n');
       sshClientRef.current = client;
 
-      sendToTerminal('Membuka shell...\r\n');
       await client.startShell(PtyType.XTERM);
+      sendToTerminal('[DEBUG] Shell dibuka.\r\n');
 
       client.on('Shell', (event: any) => {
-        if (event) {
-          sendToTerminal(event);
-        }
+        if (event) sendToTerminal(event);
       });
 
       setConnected(true);
@@ -171,10 +182,8 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
       sendToTerminal('\r\n\x1b[32mTerhubung!\x1b[0m\r\n');
     } catch (e: any) {
       const msg = e.message || String(e);
+      sendToTerminal(`\r\n\x1b[31m[DEBUG] Error: ${msg}\x1b[0m\r\n`);
       setStatus(`Gagal: ${msg}`);
-      sendToTerminal(`\r\n\x1b[31mGagal: ${msg}\x1b[0m\r\n`);
-      sendToTerminal('\x1b[33mKetuk tombol kembali untuk coba lagi.\x1b[0m\r\n');
-      // Tampilkan dialog password lagi setelah 1 detik biar bisa retry
       setTimeout(() => setShowPasswordDialog(true), 1000);
     }
   };

@@ -39,11 +39,11 @@ const NavIcon: React.FC<{ name: 'Klien' | 'Tools' | 'SSH' | 'SFTP' | 'File'; col
     File: 'M6 2h8l5 5v15H6zM14 2v5h5',
   };
   return (
-    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Svg width={26} height={26} viewBox="0 0 24 24" fill="none">
       <Path
         d={paths[name]}
         stroke={color}
-        strokeWidth={1.8}
+        strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -92,10 +92,15 @@ export const InstrumentHeader: React.FC<InstrumentHeaderProps> = ({
                     styles.statValue,
                     { color: st.color || theme.colors.text },
                   ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.5}
                 >
                   {st.value}
                 </Text>
-                <Text style={styles.statLabel}>{st.label}</Text>
+                <Text style={styles.statLabel} numberOfLines={1}>
+                  {st.label}
+                </Text>
               </View>
               {i < stats.length - 1 && <View style={styles.statDivider} />}
             </React.Fragment>
@@ -616,17 +621,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 6,
+    minWidth: 0,
+    overflow: 'hidden',
   },
   statValue: {
     fontSize: 28,
     fontWeight: '700',
     fontFamily: theme.fonts.mono,
+    flexShrink: 1,
+    minWidth: 0,
   },
   statLabel: {
     fontSize: theme.sizes.micro,
     fontWeight: '700',
     letterSpacing: 2,
     color: theme.colors.faint,
+    flexShrink: 0,
   },
   statDivider: {
     width: 1,

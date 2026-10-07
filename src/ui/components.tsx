@@ -21,7 +21,7 @@ import Svg, { Path } from 'react-native-svg';
 
 // NavIcon — ikon garis outline ala mockup (bukan emoji).
 // stroke mengikuti prop color: aktif = accent, nonaktif = dim.
-const NavIcon: React.FC<{ name: 'Klien' | 'Tools' | 'SSH' | 'SFTP'; color: string }> = ({
+const NavIcon: React.FC<{ name: 'Klien' | 'Tools' | 'SSH' | 'SFTP' | 'File'; color: string }> = ({
   name,
   color,
 }) => {
@@ -35,6 +35,8 @@ const NavIcon: React.FC<{ name: 'Klien' | 'Tools' | 'SSH' | 'SFTP'; color: strin
     SSH: 'M5 7l5 5-5 5M12 17h7M4 4h16v16H4z',
     // folder
     SFTP: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
+    // file/doc
+    File: 'M6 2h8l5 5v15H6zM14 2v5h5',
   };
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
@@ -273,7 +275,15 @@ export const SpecSheet: React.FC<SpecSheetProps> = ({ rows, onCopyRow }) => {
                 onPress={() => onCopyRow(row.label, row.value)}
                 style={styles.copyBtn}
               >
-                <Text style={styles.copyBtnText}>📋</Text>
+                <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                  <Path
+                    d="M9 9h11v11H9zM5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                    stroke={theme.colors.dim}
+                    strokeWidth={1.8}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </Svg>
               </TouchableOpacity>
             )}
           </View>
@@ -463,7 +473,7 @@ export const FileRow: React.FC<FileRowProps> = ({
       activeOpacity={0.7}
     >
       <View style={styles.fileRowLeft}>
-        <Text style={styles.fileIcon}>{isDir ? '📁' : '📄'}</Text>
+        <NavIcon name={isDir ? 'SFTP' : 'File'} color={theme.colors.dim} />
         <Text style={[styles.fileName, isDir && styles.monoFont]}>
           {name}
         </Text>
@@ -749,9 +759,6 @@ const styles = StyleSheet.create({
   copyBtn: {
     paddingLeft: theme.spacing.sm,
   },
-  copyBtnText: {
-    fontSize: 14,
-  },
   specDivider: {
     height: 1,
     backgroundColor: theme.colors.hairline,
@@ -877,9 +884,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     gap: 8,
-  },
-  fileIcon: {
-    fontSize: 18,
   },
   fileName: {
     fontSize: theme.sizes.base,

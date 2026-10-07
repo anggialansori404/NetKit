@@ -76,7 +76,20 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
   const [status, setStatus] = useState('Menghubungkan...');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [terminalReady, setTerminalReady] = useState(false);
   const sshClientRef = useRef<any>(null);
+
+  // Fallback: jika WebView tidak kirim 'ready' dalam 3 detik, tampilkan dialog password anyway
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!terminalReady) {
+        console.log('[SSH] WebView timeout, tampilkan dialog password');
+        connectSsh();
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Cleanup saat unmount
   useEffect(() => {
@@ -96,9 +109,9 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
     try {
       const msg = JSON.parse(event.nativeEvent.data);
       if (msg.type === 'ready') {
+        setTerminalReady(true);
         connectSsh();
       } else if (msg.type === 'input') {
-        // Kirim input user ke SSH shell
         if (sshClientRef.current && connected) {
           sshClientRef.current.writeToShell(msg.data).catch(() => {});
         }
@@ -121,23 +134,32 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
 
   const doConnect = async (pwd: string) => {
     if (!session) return;
+    if (!pwd.trim()) {
+      sendToTerminal('\r\n\x1b[31mPassword tidak boleh kosong\x1b[0m\r\n');
+      return;
+    }
     setShowPasswordDialog(false);
     setStatus(`Menghubungkan ke ${session.host}...`);
-    sendToTerminal(`Menghubungkan...\r\n`);
+    sendToTerminal(`Menghubungkan ke ${session.host}:${session.port}...\r\n`);
+
+    // Timeout 15 detik
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout: server tidak merespons dalam 15 detik')), 15000)
+    );
 
     try {
-      const client = await SSHClient.connectWithPassword(
+      const connectPromise = SSHClient.connectWithPassword(
         session.host,
         session.port,
         session.username,
         pwd
       );
+      const client: any = await Promise.race([connectPromise, timeoutPromise]);
       sshClientRef.current = client;
 
-      // Start shell dengan pty xterm
+      sendToTerminal('Membuka shell...\r\n');
       await client.startShell(PtyType.XTERM);
 
-      // Terima output dari shell
       client.on('Shell', (event: any) => {
         if (event) {
           sendToTerminal(event);
@@ -148,8 +170,12 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
       setStatus('Terhubung');
       sendToTerminal('\r\n\x1b[32mTerhubung!\x1b[0m\r\n');
     } catch (e: any) {
-      setStatus(`Gagal: ${e.message || e}`);
-      sendToTerminal(`\r\n\x1b[31mGagal: ${e.message || e}\x1b[0m\r\n`);
+      const msg = e.message || String(e);
+      setStatus(`Gagal: ${msg}`);
+      sendToTerminal(`\r\n\x1b[31mGagal: ${msg}\x1b[0m\r\n`);
+      sendToTerminal('\x1b[33mKetuk tombol kembali untuk coba lagi.\x1b[0m\r\n');
+      // Tampilkan dialog password lagi setelah 1 detik biar bisa retry
+      setTimeout(() => setShowPasswordDialog(true), 1000);
     }
   };
 
@@ -235,11 +261,18 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
               label="Password"
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
+              secureTextEntry={!showPassword}
               mode="outlined"
               dense
               autoCapitalize="none"
+              autoCorrect={false}
               onSubmitEditing={() => doConnect(password)}
+              right={
+                <TextInput.Icon
+                  icon={showPassword ? 'eye-off' : 'eye'}
+                  onPress={() => setShowPassword(!showPassword)}
+                />
+              }
             />
           </Dialog.Content>
           <Dialog.Actions>

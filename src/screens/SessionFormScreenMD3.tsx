@@ -26,6 +26,7 @@ export function SessionFormScreenMD3({ navigation, route }: any) {
   const [port, setPort] = useState(existing ? String(existing.port) : '22');
   const [username, setUsername] = useState(existing?.username || '');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [auth, setAuth] = useState<'password' | 'key'>(existing?.auth || 'password');
 
   const handleSave = () => {
@@ -102,10 +103,16 @@ export function SessionFormScreenMD3({ navigation, route }: any) {
             onChangeText={setPassword}
             mode="outlined"
             dense
-            secureTextEntry
+            secureTextEntry={!showPassword}
             autoCapitalize="none"
             autoCorrect={false}
             style={styles.input}
+            right={
+              <TextInput.Icon
+                icon={showPassword ? 'eye-off' : 'eye'}
+                onPress={() => setShowPassword(!showPassword)}
+              />
+            }
           />
         )}
 

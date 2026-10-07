@@ -4,7 +4,7 @@
  */
 
 import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import {
   Appbar,
@@ -31,38 +31,68 @@ const XTERM_HTML = `
   #terminal { height: 100%; padding: 8px; }
   .xterm { height: 100%; }
 </style>
+<link rel="stylesheet" href="file:///android_asset/xterm.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
 </head>
 <body>
 <div id="terminal"></div>
-<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+<script src="file:///android_asset/xterm.js"></script>
 <script>
-  const term = new Terminal({
-    theme: { background: '#1D1B20', foreground: '#E6E0E9' },
-    fontSize: 14,
-    fontFamily: 'monospace',
-    cursorBlink: true,
-  });
-  term.open(document.getElementById('terminal'));
-  term.writeln('NetKit SSH Terminal');
-  term.writeln('Menghubungkan...\\r\\n');
+  function notifyError(msg) {
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'error', data: msg }));
+    }
+  }
 
-  // Terima data dari React Native
-  window.addEventListener('message', (e) => {
+  function initTerminal() {
     try {
-      const msg = JSON.parse(e.data);
-      if (msg.type === 'data') term.write(msg.data);
-      if (msg.type === 'clear') term.clear();
+      window.term = new Terminal({
+        theme: { background: '#1D1B20', foreground: '#E6E0E9' },
+        fontSize: 14,
+        fontFamily: 'monospace',
+        cursorBlink: true,
+      });
+      window.term.open(document.getElementById('terminal'));
+      window.term.writeln('NetKit SSH Terminal');
+      window.term.writeln('Menghubungkan...\\r\\n');
+
+      window.term.onData(function(data) {
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'input', data: data }));
+        }
+      });
+
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ready' }));
+      }
+    } catch (err) {
+      notifyError('Init terminal error: ' + err.message);
+    }
+  }
+
+  // Fallback ke CDN jika local asset belum ada atau gagal
+  if (typeof Terminal === 'undefined') {
+    var cdnScript = document.createElement('script');
+    cdnScript.src = 'https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js';
+    cdnScript.onload = initTerminal;
+    cdnScript.onerror = function() {
+      notifyError('Gagal memuat xterm.js baik dari local asset maupun CDN');
+    };
+    document.head.appendChild(cdnScript);
+  } else {
+    initTerminal();
+  }
+
+  // Terima data dari React Native (dukung Android document dan iOS window)
+  function handleRNMessage(e) {
+    try {
+      var msg = JSON.parse(e.data);
+      if (msg.type === 'data' && window.term) window.term.write(msg.data);
+      if (msg.type === 'clear' && window.term) window.term.clear();
     } catch(err) {}
-  });
-
-  // Kirim input ke React Native
-  term.onData((data) => {
-    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'input', data }));
-  });
-
-  // Beri tahu RN bahwa terminal siap
-  window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ready' }));
+  }
+  window.addEventListener('message', handleRNMessage);
+  document.addEventListener('message', handleRNMessage);
 </script>
 </body>
 </html>
@@ -93,12 +123,12 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!terminalReady) {
-        console.log('[SSH] WebView timeout, tampilkan dialog password');
+        addDebugLog('[WARN] WebView xterm.js timeout (3s), membuka dialog password');
         connectSsh();
       }
     }, 3000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [terminalReady]);
 
   // Cleanup saat unmount
   useEffect(() => {
@@ -129,11 +159,15 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
       const msg = JSON.parse(event.nativeEvent.data);
       if (msg.type === 'ready') {
         setTerminalReady(true);
+        addDebugLog('Terminal xterm.js siap');
         connectSsh();
       } else if (msg.type === 'input') {
         if (sshClientRef.current && connected) {
           sshClientRef.current.writeToShell(msg.data).catch(() => {});
         }
+      } else if (msg.type === 'error') {
+        addDebugLog(`[WebView Error] ${msg.data}`);
+        setShowDebug(true);
       }
     } catch (e) {}
   };
@@ -170,6 +204,7 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
       addDebugLog(`ERROR: ${err}`);
       sendToTerminal(`\x1b[31m[DEBUG] ${err}\x1b[0m\r\n`);
       setStatus('Gagal: native module tidak ada');
+      Alert.alert('Error SSH', err);
       return;
     }
 
@@ -212,7 +247,14 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
       addDebugLog(`ERROR: ${msg}`);
       sendToTerminal(`\r\n\x1b[31m[DEBUG] Error: ${msg}\x1b[0m\r\n`);
       setStatus(`Gagal: ${msg}`);
-      setTimeout(() => setShowPasswordDialog(true), 1000);
+      Alert.alert(
+        'Gagal Terhubung',
+        `Error: ${msg}`,
+        [
+          { text: 'Coba Lagi', onPress: () => setShowPasswordDialog(true) },
+          { text: 'Batal', style: 'cancel' },
+        ]
+      );
     }
   };
 
@@ -281,11 +323,22 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
 
       <WebView
         ref={webviewRef}
-        source={{ html: XTERM_HTML }}
+        source={{
+          html: XTERM_HTML,
+          baseUrl: Platform.OS === 'android' ? 'file:///android_asset/' : undefined,
+        }}
         onMessage={handleMessage}
         style={styles.webview}
         javaScriptEnabled={true}
+        domStorageEnabled={true}
+        allowFileAccess={true}
+        allowFileAccessFromFileURLs={true}
+        allowUniversalAccessFromFileURLs={true}
         originWhitelist={['*']}
+        onError={(e) => {
+          addDebugLog(`[WebView Load Error] ${e.nativeEvent.description}`);
+          setShowDebug(true);
+        }}
       />
 
       {/* Extra key row: Esc, Tab, Ctrl, Arrows */}

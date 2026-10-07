@@ -20,9 +20,12 @@ export const theme = {
     warn: '#B45309',
     fail: '#DC2626',
     termBg: '#0D1117',
+    termPanel: '#161B22',
+    termKey: '#21262D',
     termText: '#D7DEE6',
     termGreen: '#4ADE80',
     termDim: '#788291',
+    accentDark: '#0847C2',
     white: '#FFFFFF',
   },
   fonts: {
@@ -41,9 +44,9 @@ export const theme = {
     stat: 32,
   },
   radii: {
-    sm: 6,
-    md: 10,
-    lg: 12,
+    sm: 2,
+    md: 4,
+    lg: 6,
     pill: 999,
   },
   spacing: {

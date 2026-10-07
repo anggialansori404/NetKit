@@ -17,6 +17,37 @@ import {
   ScrollView,
 } from 'react-native';
 import { theme } from './theme';
+import Svg, { Path } from 'react-native-svg';
+
+// NavIcon — ikon garis outline ala mockup (bukan emoji).
+// stroke mengikuti prop color: aktif = accent, nonaktif = dim.
+const NavIcon: React.FC<{ name: 'Klien' | 'Tools' | 'SSH' | 'SFTP'; color: string }> = ({
+  name,
+  color,
+}) => {
+  const paths: Record<string, string> = {
+    // house outline
+    Klien: 'M4 11l8-7 8 7M6 9.5V20h12V9.5M10 20v-6h4v6',
+    // wrench
+    Tools:
+      'M14.5 6.5a4 4 0 0 0-5.6 4.8L4 16.2V20h3.8l4.9-4.9a4 4 0 0 0 4.8-5.6l-2.9 2.9-2.5-2.5 2.4-3.4z',
+    // terminal >_
+    SSH: 'M5 7l5 5-5 5M12 17h7M4 4h16v16H4z',
+    // folder
+    SFTP: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
+  };
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+      <Path
+        d={paths[name]}
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
 
 // 1. InstrumentHeader
 // Wordmark + 3 stat (angka mono besar + micro label); slot aksi kanan (gear)
@@ -44,7 +75,7 @@ export const InstrumentHeader: React.FC<InstrumentHeaderProps> = ({
             activeOpacity={0.7}
             accessibilityLabel="Pengaturan"
           >
-            <Text style={styles.gearIcon}>⚙</Text>
+            <GearIconSvg />
           </TouchableOpacity>
         )}
       </View>
@@ -72,6 +103,24 @@ export const InstrumentHeader: React.FC<InstrumentHeaderProps> = ({
     </View>
   );
 };
+
+// GearIcon — ikon gear garis untuk slot aksi header
+const GearIconSvg: React.FC = () => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
+      stroke={theme.colors.dim}
+      strokeWidth={1.8}
+    />
+    <Path
+      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+      stroke={theme.colors.dim}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
 
 // 2. TerminalSearch
 // Panel putih + prompt '>' accent + hint mono
@@ -342,11 +391,20 @@ export const TerminalView: React.FC<TerminalViewProps> = ({
     <View style={styles.termContainer}>
       {/* Terminal Output */}
       <ScrollView style={styles.termOutputArea}>
-        {output.map((line, idx) => (
-          <Text key={idx} style={styles.termLine}>
-            {line}
+        {output.length === 0 ? (
+          <Text style={styles.termEmpty}>
+            <Text style={{ color: theme.colors.termGreen }}>{'>_ '}</Text>
+            <Text style={{ color: theme.colors.termDim }}>
+              belum ada output — ketik perintah di bawah
+            </Text>
           </Text>
-        ))}
+        ) : (
+          output.map((line, idx) => (
+            <Text key={idx} style={styles.termLine}>
+              {line}
+            </Text>
+          ))
+        )}
       </ScrollView>
 
       {/* Extra Key Row */}
@@ -459,40 +517,36 @@ export const WavyNavBar: React.FC<WavyNavBarProps> = ({
   onSelectTab,
   onFabPress,
 }) => {
-  const tabs: Array<{
-    name: 'Klien' | 'Tools' | 'SSH' | 'SFTP';
-    icon: string;
-  }> = [
-    { name: 'Klien', icon: '🏛' },
-    { name: 'Tools', icon: '🛠' },
-    { name: 'SSH', icon: '💻' },
-    { name: 'SFTP', icon: '📁' },
+  const tabs: Array<'Klien' | 'Tools' | 'SSH' | 'SFTP'> = [
+    'Klien',
+    'Tools',
+    'SSH',
+    'SFTP',
   ];
 
   return (
     <View style={styles.navBarWrapper}>
       <View style={styles.navBarContainer}>
         {tabs.map((tab) => {
-          const isActive = activeTab === tab.name;
+          const isActive = activeTab === tab;
+          const color = isActive ? theme.colors.accent : theme.colors.dim;
           return (
             <TouchableOpacity
-              key={tab.name}
+              key={tab}
               style={styles.navItem}
-              onPress={() => onSelectTab(tab.name)}
+              onPress={() => onSelectTab(tab)}
               activeOpacity={0.7}
             >
-              <Text style={styles.navIcon}>{tab.icon}</Text>
+              <NavIcon name={tab} color={color} />
               <Text
                 style={[
                   styles.navLabel,
                   {
-                    color: isActive
-                      ? theme.colors.accent
-                      : theme.colors.dim,
+                    color,
                   },
                 ]}
               >
-                {tab.name}
+                {tab}
               </Text>
             </TouchableOpacity>
           );
@@ -541,10 +595,6 @@ const styles = StyleSheet.create({
   },
   gearButton: {
     padding: theme.spacing.xs,
-  },
-  gearIcon: {
-    fontSize: 20,
-    color: theme.colors.dim,
   },
   statsRow: {
     flexDirection: 'row',
@@ -609,6 +659,8 @@ const styles = StyleSheet.create({
   },
   chunkyBtnSolid: {
     backgroundColor: theme.colors.accent,
+    borderBottomWidth: 4,
+    borderBottomColor: theme.colors.accentDark,
   },
   chunkyBtnOutline: {
     backgroundColor: 'transparent',
@@ -633,7 +685,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.margin,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.hairline,
@@ -765,9 +817,14 @@ const styles = StyleSheet.create({
     color: theme.colors.termText,
     lineHeight: 18,
   },
+  termEmpty: {
+    fontSize: theme.sizes.xs,
+    fontFamily: theme.fonts.mono,
+    lineHeight: 18,
+  },
   extraKeyRow: {
     flexDirection: 'row',
-    backgroundColor: '#161B22',
+    backgroundColor: theme.colors.termPanel,
     paddingVertical: 6,
     paddingHorizontal: 4,
     borderRadius: theme.radii.sm,
@@ -778,7 +835,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 4,
-    backgroundColor: '#21262D',
+    backgroundColor: theme.colors.termKey,
   },
   extraKeyText: {
     color: theme.colors.termText,
@@ -788,7 +845,7 @@ const styles = StyleSheet.create({
   termInputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#161B22',
+    backgroundColor: theme.colors.termPanel,
     borderRadius: theme.radii.sm,
     paddingHorizontal: theme.spacing.sm,
     height: 40,
@@ -811,7 +868,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.hairline,
   },
@@ -849,7 +906,8 @@ const styles = StyleSheet.create({
     borderRadius: theme.radii.md,
     borderWidth: 1,
     borderColor: theme.colors.hairline,
-    padding: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
     marginBottom: theme.spacing.sm,
   },
   sessionName: {
@@ -885,10 +943,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
   },
-  navIcon: {
-    fontSize: 18,
-    marginBottom: 2,
-  },
   navLabel: {
     fontSize: theme.sizes.micro,
     fontWeight: '600',
@@ -905,11 +959,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
   },
   centerFabIcon: {
     fontSize: 28,

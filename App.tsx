@@ -1,99 +1,95 @@
 /**
- * NetKit v7 - Main Application Entry
- * Mobile technician toolkit for DFS Support
+ * NetKit v8 - Material Design 3
+ * Navigation: React Navigation Stack + Paper BottomNavigation
+ * Back gesture: pops stack (not closes app)
  */
 
 import React, { useState } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
-import { theme } from './src/ui/theme';
-import { WavyNavBar } from './src/ui/components';
-import { store, Client, ToolRun } from './src/storage/storage';
-import { KlienScreen } from './src/screens/KlienScreen';
-import { ClientDetailScreen } from './src/screens/ClientDetailScreen';
-import { ClientFormScreen } from './src/screens/ClientFormScreen';
-import { ToolsScreen } from './src/screens/ToolsScreen';
-import { ToolDetailScreen } from './src/screens/ToolDetailScreen';
-import { SshScreen } from './src/screens/SshScreen';
-import { SftpScreen } from './src/screens/SftpScreen';
-import { PengaturanScreen } from './src/screens/PengaturanScreen';
+import { StatusBar } from 'react-native';
+import { PaperProvider, BottomNavigation, FAB } from 'react-native-paper';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { md3Theme } from './src/ui/md3theme';
 
-type Tab = 'Klien' | 'Tools' | 'SSH' | 'SFTP';
+// Screens
+import { KlienScreenMD3 } from './src/screens/KlienScreenMD3';
+import { ToolsScreenMD3 } from './src/screens/ToolsScreenMD3';
+import { SshScreenMD3 } from './src/screens/SshScreenMD3';
+import { SftpScreenMD3 } from './src/screens/SftpScreenMD3';
+import { ClientDetailScreenMD3 } from './src/screens/ClientDetailScreenMD3';
+import { ClientFormScreenMD3 } from './src/screens/ClientFormScreenMD3';
+import { ToolDetailScreenMD3 } from './src/screens/ToolDetailScreenMD3';
+import { ToolRunnerScreenMD3 } from './src/screens/ToolRunnerScreenMD3';
+import { PengaturanScreenMD3 } from './src/screens/PengaturanScreenMD3';
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('Klien');
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [editingClient, setEditingClient] = useState<Client | null | 'new'>(null);
-  const [selectedTool, setSelectedTool] = useState<'PING' | 'TELNET' | 'DNS' | 'HTTP/SSL' | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
+const Stack = createNativeStackNavigator();
+
+// Main tabs with MD3 BottomNavigation + FAB
+function MainTabs({ navigation }: any) {
+  const [index, setIndex] = useState(0);
+  const [routes] = useState([
+    { key: 'klien', title: 'Klien', focusedIcon: 'bank', unfocusedIcon: 'bank-outline' },
+    { key: 'tools', title: 'Tools', focusedIcon: 'wrench', unfocusedIcon: 'wrench-outline' },
+    { key: 'ssh', title: 'SSH', focusedIcon: 'console', unfocusedIcon: 'console-line' },
+    { key: 'sftp', title: 'SFTP', focusedIcon: 'folder', unfocusedIcon: 'folder-outline' },
+  ]);
+
+  const renderScene = BottomNavigation.SceneMap({
+    klien: () => <KlienScreenMD3 navigation={navigation} />,
+    tools: () => <ToolsScreenMD3 navigation={navigation} />,
+    ssh: () => <SshScreenMD3 navigation={navigation} />,
+    sftp: () => <SftpScreenMD3 navigation={navigation} />,
+  });
 
   const handleFabPress = () => {
-    if (activeTab === 'Klien') {
-      setEditingClient('new');
+    const route = routes[index].key;
+    if (route === 'klien') {
+      navigation.navigate('ClientForm', {});
+    } else if (route === 'ssh') {
+      // TODO: new SSH session
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.content}>
-        {showSettings ? (
-          <PengaturanScreen onBack={() => setShowSettings(false)} />
-        ) : selectedClient ? (
-          <ClientDetailScreen
-            client={selectedClient}
-            onBack={() => setSelectedClient(null)}
-            onEdit={(client) => {
-              setEditingClient(client);
-              setSelectedClient(null);
-            }}
-            onDeleted={() => setSelectedClient(null)}
-          />
-        ) : editingClient ? (
-          <ClientFormScreen
-            initialClient={editingClient === 'new' ? undefined : editingClient}
-            onCancel={() => setEditingClient(null)}
-            onSaved={() => setEditingClient(null)}
-          />
-        ) : selectedTool ? (
-          <ToolDetailScreen
-            tool={selectedTool}
-            onBack={() => setSelectedTool(null)}
-          />
-        ) : activeTab === 'Klien' ? (
-          <KlienScreen
-            onSelectClient={(c) => setSelectedClient(c)}
-            onOpenSettings={() => setShowSettings(true)}
-          />
-        ) : activeTab === 'Tools' ? (
-          <ToolsScreen
-            onSelectTool={(t) => setSelectedTool(t)}
-            onSelectHistory={(_run: ToolRun) => {}}
-            onOpenSettings={() => setShowSettings(true)}
-          />
-        ) : activeTab === 'SSH' ? (
-          <SshScreen onOpenSettings={() => setShowSettings(true)} />
-        ) : (
-          <SftpScreen onOpenSettings={() => setShowSettings(true)} />
-        )}
-      </View>
-
-      {!showSettings && !selectedClient && !editingClient && !selectedTool && (
-        <WavyNavBar
-          activeTab={activeTab}
-          onSelectTab={(t) => setActiveTab(t as Tab)}
-          onFabPress={handleFabPress}
-        />
-      )}
-    </SafeAreaView>
+    <>
+      <BottomNavigation
+        navigationState={{ index, routes }}
+        onIndexChange={setIndex}
+        renderScene={renderScene}
+        compact={true}
+      />
+      <FAB
+        icon="plus"
+        style={{ position: 'absolute', margin: 16, right: 0, bottom: 80 }}
+        onPress={handleFabPress}
+      />
+    </>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.bg,
-  },
-  content: {
-    flex: 1,
-  },
-});
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <PaperProvider theme={md3Theme}>
+        <StatusBar barStyle="dark-content" />
+        <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName="MainTabs"
+            screenOptions={{
+              headerShown: false,
+              // Android back gesture pops stack automatically
+            }}
+          >
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen name="ClientDetail" component={ClientDetailScreenMD3} />
+            <Stack.Screen name="ClientForm" component={ClientFormScreenMD3} />
+            <Stack.Screen name="ToolDetail" component={ToolDetailScreenMD3} />
+            <Stack.Screen name="ToolRunner" component={ToolRunnerScreenMD3} />
+            <Stack.Screen name="Settings" component={PengaturanScreenMD3} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </PaperProvider>
+    </SafeAreaProvider>
+  );
+}

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --experimental-strip-types --test src/engine/__tests__/network.test.ts"
+    "test": "node --experimental-strip-types --test src/engine/__tests__/*.test.ts"
   },
   "keywords": [],
   "author": "",

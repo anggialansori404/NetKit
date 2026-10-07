@@ -5,7 +5,7 @@
  * Kredensial SSH/SFTP di Keychain/Keystore abstraction.
  */
 
-import { isPrivateIp } from '../engine/network.js';
+import { isPrivateIp } from '../engine/network.ts';
 
 export interface Client {
   id: string;

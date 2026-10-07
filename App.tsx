@@ -25,6 +25,7 @@ import { ToolDetailScreenMD3 } from './src/screens/ToolDetailScreenMD3';
 import { ToolRunnerScreenMD3 } from './src/screens/ToolRunnerScreenMD3';
 import { PengaturanScreenMD3 } from './src/screens/PengaturanScreenMD3';
 import { SessionFormScreenMD3 } from './src/screens/SessionFormScreenMD3';
+import { SshTerminalScreenMD3 } from './src/screens/SshTerminalScreenMD3';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -128,6 +129,7 @@ export default function App() {
             <Stack.Screen name="ToolRunner" component={ToolRunnerScreenMD3} />
             <Stack.Screen name="Settings" component={PengaturanScreenMD3} />
             <Stack.Screen name="SessionForm" component={SessionFormScreenMD3} />
+            <Stack.Screen name="SshTerminal" component={SshTerminalScreenMD3} />
           </Stack.Navigator>
         </NavigationContainer>
       </PaperProvider>

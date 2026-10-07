@@ -61,7 +61,7 @@ export function SshScreenMD3({ navigation }: any) {
                 title={item.nama}
                 titleStyle={{ fontWeight: '600' }}
                 description={`${item.username}@${item.host}:${item.port}`}
-                onPress={() => navigation.navigate('ToolRunner', { tool: 'SSH', sessionId: item.id })}
+                onPress={() => navigation.navigate('SshTerminal', { sessionId: item.id })}
                 right={() => (
                   <IconButton
                     icon="delete-outline"

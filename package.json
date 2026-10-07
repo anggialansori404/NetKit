@@ -11,6 +11,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@dylankenneally/react-native-ssh-sftp": "^1.11.0",
     "@op-engineering/op-sqlite": "^18.2.5",
     "@react-navigation/bottom-tabs": "^7.20.0",
     "@react-navigation/native": "^7.5.0",

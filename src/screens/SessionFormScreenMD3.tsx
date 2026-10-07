@@ -25,6 +25,7 @@ export function SessionFormScreenMD3({ navigation, route }: any) {
   const [host, setHost] = useState(existing?.host || '');
   const [port, setPort] = useState(existing ? String(existing.port) : '22');
   const [username, setUsername] = useState(existing?.username || '');
+  const [password, setPassword] = useState('');
   const [auth, setAuth] = useState<'password' | 'key'>(existing?.auth || 'password');
 
   const handleSave = () => {
@@ -37,10 +38,13 @@ export function SessionFormScreenMD3({ navigation, route }: any) {
       auth,
       secretRef: existing?.secretRef || `sec_${Date.now()}`,
     };
+    // Simpan password ke storage aman (sementara: AsyncStorage, TODO: Keychain)
+    // Untuk sekarang, simpan di secretRef sebagai placeholder
     if (existing) {
       store.deleteSession(existing.id);
     }
-    store.addSession(data);
+    const newSession = store.addSession(data);
+    // TODO: Simpan password terenkripsi dengan secretRef
     navigation.goBack();
   };
 
@@ -91,6 +95,19 @@ export function SessionFormScreenMD3({ navigation, route }: any) {
           autoCorrect={false}
           style={styles.input}
         />
+        {auth === 'password' && (
+          <TextInput
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            mode="outlined"
+            dense
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={styles.input}
+          />
+        )}
 
         <Text variant="labelLarge" style={styles.label}>
           Metode Auth

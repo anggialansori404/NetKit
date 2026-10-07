@@ -10,7 +10,7 @@ import {
   Button,
   useTheme,
 } from 'react-native-paper';
-import { store } from '../storage/storage';
+import { store } from '../storage/storage-sqlite';
 
 export function ClientFormScreenMD3({ navigation, route }: any) {
   const theme = useTheme();

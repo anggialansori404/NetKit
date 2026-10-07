@@ -1,41 +1,57 @@
 /**
  * NetKit MD3 - SSH Screen
+ * Dengan hapus sesi (long-press / icon delete).
  */
 
 import React, { useState, useCallback } from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
+import { View, FlatList, StyleSheet, Alert } from 'react-native';
 import {
   Appbar,
   List,
   Divider,
   Button,
   Text,
+  IconButton,
   useTheme,
 } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
-import { store } from '../storage/storage';
+import { store, SshSession } from '../storage/storage-sqlite';
 
 export function SshScreenMD3({ navigation }: any) {
   const theme = useTheme();
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<SshSession[]>([]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setSessions(store.getSessions());
-    }, [])
-  );
+  const load = useCallback(() => {
+    setSessions(store.getSessions());
+  }, []);
+
+  useFocusEffect(load);
+
+  const handleDelete = (s: SshSession) => {
+    Alert.alert(
+      'Hapus Sesi',
+      `Hapus sesi "${s.nama}" (${s.username}@${s.host}:${s.port})?`,
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Hapus',
+          style: 'destructive',
+          onPress: () => {
+            store.deleteSession(s.id);
+            load();
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Appbar.Header elevated={false}>
-        <Appbar.Content title="SSH" subtitle={`${sessions.length} sesi · full pty`} />
-        <Appbar.Action icon="cog" onPress={() => navigation.navigate('Settings')} />
+      <Appbar.Header>
+        <Appbar.Content title="SSH" subtitle={`${sessions.length} sesi`} />
       </Appbar.Header>
 
       <View style={styles.content}>
-        <Text variant="labelLarge" style={styles.sectionTitle}>
-          DAFTAR SESI TERSIMPAN
-        </Text>
         <FlatList
           data={sessions}
           keyExtractor={(item) => item.id}
@@ -43,29 +59,33 @@ export function SshScreenMD3({ navigation }: any) {
             <>
               <List.Item
                 title={item.nama}
-                description={`${item.user}@${item.host}:${item.port}`}
-                descriptionStyle={undefined}
-                right={() => <List.Icon icon="chevron-right" />}
+                titleStyle={{ fontWeight: '600' }}
+                description={`${item.username}@${item.host}:${item.port}`}
                 onPress={() => navigation.navigate('ToolRunner', { tool: 'SSH', sessionId: item.id })}
+                right={() => (
+                  <IconButton
+                    icon="delete-outline"
+                    iconColor={theme.colors.error}
+                    size={22}
+                    onPress={() => handleDelete(item)}
+                  />
+                )}
                 style={styles.item}
               />
               <Divider />
             </>
           )}
           ListEmptyComponent={
-            <Text variant="bodyMedium" style={[styles.empty, { color: theme.colors.secondary }]}>
-              Belum ada sesi SSH tersimpan.
-            </Text>
+            <View style={styles.empty}>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                Belum ada sesi SSH tersimpan.
+              </Text>
+              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
+                Tambah sesi baru untuk mulai.
+              </Text>
+            </View>
           }
         />
-        <Button
-          mode="outlined"
-          icon="plus"
-          onPress={() => {}}
-          style={styles.addButton}
-        >
-          Tambah Sesi SSH Baru
-        </Button>
       </View>
     </View>
   );
@@ -73,9 +93,7 @@ export function SshScreenMD3({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flex: 1, padding: 12, paddingBottom: 96 },
-  sectionTitle: { marginVertical: 8, opacity: 0.7 },
-  item: { paddingVertical: 2 },
-  empty: { padding: 16 },
-  addButton: { marginTop: 12 },
+  content: { flex: 1 },
+  item: { paddingVertical: 4 },
+  empty: { padding: 32, alignItems: 'center' },
 });

@@ -1,14 +1,16 @@
 /**
- * NetKit v8 - Material Design 3
- * Navigation: React Navigation Stack + Paper BottomNavigation
+ * NetKit v8 - Material Design 3 (strict baseline)
+ * Navigation: Stack + Bottom Tabs (React Navigation, smooth + animated)
  * Back gesture: pops stack (not closes app)
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { StatusBar } from 'react-native';
-import { PaperProvider, BottomNavigation, FAB } from 'react-native-paper';
+import { PaperProvider } from 'react-native-paper';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { md3Theme } from './src/ui/md3theme';
 
@@ -24,47 +26,47 @@ import { ToolRunnerScreenMD3 } from './src/screens/ToolRunnerScreenMD3';
 import { PengaturanScreenMD3 } from './src/screens/PengaturanScreenMD3';
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
-// Main tabs with MD3 BottomNavigation + FAB
-function MainTabs({ navigation }: any) {
-  const [index, setIndex] = useState(0);
-  const [routes] = useState([
-    { key: 'klien', title: 'Klien', focusedIcon: 'bank', unfocusedIcon: 'bank-outline' },
-    { key: 'tools', title: 'Tools', focusedIcon: 'wrench', unfocusedIcon: 'wrench-outline' },
-    { key: 'ssh', title: 'SSH', focusedIcon: 'console', unfocusedIcon: 'console-line' },
-    { key: 'sftp', title: 'SFTP', focusedIcon: 'folder', unfocusedIcon: 'folder-outline' },
-  ]);
-
-  const renderScene = BottomNavigation.SceneMap({
-    klien: () => <KlienScreenMD3 navigation={navigation} />,
-    tools: () => <ToolsScreenMD3 navigation={navigation} />,
-    ssh: () => <SshScreenMD3 navigation={navigation} />,
-    sftp: () => <SftpScreenMD3 navigation={navigation} />,
-  });
-
-  const handleFabPress = () => {
-    const route = routes[index].key;
-    if (route === 'klien') {
-      navigation.navigate('ClientForm', {});
-    } else if (route === 'ssh') {
-      // TODO: new SSH session
-    }
+function tabIcon(routeName: string, focused: boolean, color: string, size: number) {
+  const icons: Record<string, [string, string]> = {
+    KlienTab: ['bank', 'bank-outline'],
+    ToolsTab: ['wrench', 'wrench-outline'],
+    SSHTab: ['console', 'console-line'],
+    SFTPTab: ['folder', 'folder-outline'],
   };
+  const [f, u] = icons[routeName] || ['circle', 'circle-outline'];
+  return <MaterialCommunityIcons name={focused ? f : u} color={color} size={size} />;
+}
 
+// Bottom tabs — MD3 styled, smooth animated transitions
+function MainTabs() {
   return (
-    <>
-      <BottomNavigation
-        navigationState={{ index, routes }}
-        onIndexChange={setIndex}
-        renderScene={renderScene}
-        compact={true}
-      />
-      <FAB
-        icon="plus"
-        style={{ position: 'absolute', margin: 16, right: 0, bottom: 80 }}
-        onPress={handleFabPress}
-      />
-    </>
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: md3Theme.colors.primary,
+        tabBarInactiveTintColor: md3Theme.colors.onSurfaceVariant,
+        tabBarStyle: {
+          backgroundColor: md3Theme.colors.surfaceVariant,
+          borderTopWidth: 0,
+          elevation: 2,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+        },
+        tabBarIcon: ({ focused, color, size }) => tabIcon(route.name, focused, color, size),
+        // Smooth animation
+        animation: 'shift',
+        lazy: false,
+      })}
+    >
+      <Tab.Screen name="KlienTab" component={KlienScreenMD3} options={{ title: 'Klien' }} />
+      <Tab.Screen name="ToolsTab" component={ToolsScreenMD3} options={{ title: 'Tools' }} />
+      <Tab.Screen name="SSHTab" component={SshScreenMD3} options={{ title: 'SSH' }} />
+      <Tab.Screen name="SFTPTab" component={SftpScreenMD3} options={{ title: 'SFTP' }} />
+    </Tab.Navigator>
   );
 }
 
@@ -78,7 +80,7 @@ export default function App() {
             initialRouteName="MainTabs"
             screenOptions={{
               headerShown: false,
-              // Android back gesture pops stack automatically
+              animation: 'slide_from_right',
             }}
           >
             <Stack.Screen name="MainTabs" component={MainTabs} />

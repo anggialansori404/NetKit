@@ -12,7 +12,7 @@ import {
   Text,
   useTheme,
 } from 'react-native-paper';
-import { store } from '../storage/storage';
+import { store } from '../storage/storage-sqlite';
 import { isPrivateIp } from '../engine/network';
 
 export function ClientDetailScreenMD3({ navigation, route }: any) {

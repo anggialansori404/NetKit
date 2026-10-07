@@ -5,7 +5,7 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Appbar, Text, Card, useTheme } from 'react-native-paper';
-import { store } from '../storage/storage';
+import { store } from '../storage/storage-sqlite';
 
 export function ToolDetailScreenMD3({ navigation, route }: any) {
   const theme = useTheme();

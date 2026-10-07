@@ -14,7 +14,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
-import { store, Client } from '../storage/storage';
+import { store, Client } from '../storage/storage-sqlite';
 import { isPrivateIp } from '../engine/network';
 
 export function KlienScreenMD3({ navigation }: any) {

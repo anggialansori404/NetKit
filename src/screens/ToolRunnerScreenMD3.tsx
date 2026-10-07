@@ -15,7 +15,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { runPing, runTelnet, runDns, runHttpSsl } from '../engine/network';
-import { store } from '../storage/storage';
+import { store } from '../storage/storage-sqlite';
 
 const TOOL_META: Record<string, { targetLabel: string; targetPlaceholder: string; hint: string }> = {
   PING: { targetLabel: 'IP / Hostname', targetPlaceholder: '8.8.8.8', hint: 'Kirim 4x ICMP echo' },

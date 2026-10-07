@@ -13,7 +13,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
-import { store, ToolRun } from '../storage/storage';
+import { store, ToolRun } from '../storage/storage-sqlite';
 
 const TOOLS = [
   { key: 'PING', title: 'PING', desc: 'ip/hostname custom', icon: 'pulse' },

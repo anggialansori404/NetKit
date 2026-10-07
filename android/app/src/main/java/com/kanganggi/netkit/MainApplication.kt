@@ -1,4 +1,4 @@
-package com.ussi.netkit
+package com.kanganggi.netkit
 
 import android.app.Application
 import com.facebook.react.PackageList

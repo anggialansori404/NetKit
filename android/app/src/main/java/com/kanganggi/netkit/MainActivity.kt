@@ -1,4 +1,4 @@
-package com.ussi.netkit
+package com.kanganggi.netkit
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

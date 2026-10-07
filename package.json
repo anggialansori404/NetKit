@@ -24,6 +24,9 @@
     "typescript": "^7.0.2"
   },
   "devDependencies": {
+    "@react-native-community/cli": "^20.2.0",
+    "@react-native-community/cli-platform-android": "^20.2.0",
+    "@react-native-community/cli-platform-ios": "^20.2.0",
     "@types/node": "^26.6.4"
   }
 }

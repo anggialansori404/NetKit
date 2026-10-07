@@ -70,6 +70,9 @@ const XTERM_HTML = `
       window.term.writeln('Menghubungkan...\\r\\n');
 
       window.term.onData(function(data) {
+        // Local echo — tampilkan ketikan langsung di terminal
+        // (server tidak echo balik, jadi kita echo sendiri)
+        window.term.write(data);
         if (window.ReactNativeWebView) {
           window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'input', data: data }));
         }

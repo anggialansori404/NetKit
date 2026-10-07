@@ -70,9 +70,18 @@ const XTERM_HTML = `
       window.term.writeln('Menghubungkan...\\r\\n');
 
       window.term.onData(function(data) {
-        // Local echo — tampilkan ketikan langsung di terminal
-        // (server tidak echo balik, jadi kita echo sendiri)
-        window.term.write(data);
+        // Local echo dengan handling khusus untuk backspace/delete
+        if (data === '\x7f' || data === '\b') {
+          // Backspace: mundur, hapus char, mundur lagi
+          window.term.write('\b \b');
+        } else if (data === '\r') {
+          // Enter: pindah baris
+          window.term.write('\r\n');
+        } else if (data.charCodeAt(0) < 32 && data !== '\t') {
+          // Skip control chars lain (kecuali tab)
+        } else {
+          window.term.write(data);
+        }
         if (window.ReactNativeWebView) {
           window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'input', data: data }));
         }

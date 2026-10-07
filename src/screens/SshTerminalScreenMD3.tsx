@@ -37,6 +37,7 @@ const XTERM_HTML = `
 <body>
 <div id="terminal"></div>
 <script src="file:///android_asset/xterm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
 <script>
   function notifyError(msg) {
     if (window.ReactNativeWebView) {
@@ -49,10 +50,22 @@ const XTERM_HTML = `
       window.term = new Terminal({
         theme: { background: '#1D1B20', foreground: '#E6E0E9' },
         fontSize: 14,
-        fontFamily: 'monospace',
+        fontFamily: '"JetBrains Mono", "DejaVu Sans Mono", monospace',
         cursorBlink: true,
+        cursorStyle: 'block',
+        scrollback: 1000,
+        // Termux-like: allow proper line wrapping
+        allowProposedApi: true,
       });
+      // Fit addon — sesuaikan ukuran terminal dengan layar (kayak Termux)
+      window.fitAddon = new FitAddon.FitAddon();
+      window.term.loadAddon(window.fitAddon);
       window.term.open(document.getElementById('terminal'));
+      window.fitAddon.fit();
+      // Re-fit saat orientasi berubah
+      window.addEventListener('resize', function() {
+        try { window.fitAddon.fit(); } catch(e) {}
+      });
       window.term.writeln('NetKit SSH Terminal');
       window.term.writeln('Menghubungkan...\\r\\n');
 

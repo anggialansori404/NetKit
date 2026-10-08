@@ -3,7 +3,7 @@
  * Outlined Cards with leading Avatar, titleMedium session name, delete action.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, startTransition } from 'react';
 import { View, FlatList, StyleSheet, Alert } from 'react-native';
 import {
   Appbar,
@@ -18,10 +18,15 @@ import { store, SshSession } from '../storage/storage-sqlite';
 
 export function SftpScreenMD3({ navigation }: any) {
   const theme = useTheme();
-  const [sessions, setSessions] = useState<SshSession[]>([]);
+  const [sessions, setSessions] = useState<SshSession[]>(() => store.getSessions());
 
   const load = useCallback(() => {
-    setSessions(store.getSessions());
+    const raf = requestAnimationFrame(() => {
+      startTransition(() => {
+        setSessions(store.getSessions());
+      });
+    });
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   useFocusEffect(load);

@@ -3,7 +3,7 @@
  * Material Design 3, compact density.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, startTransition } from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
 import {
   Appbar,
@@ -23,14 +23,19 @@ type Filter = 'semua' | 'lokal' | 'publik';
 export function KlienScreenMD3({ navigation }: any) {
   const theme = useTheme();
   const [search, setSearch] = useState('');
-  const [clients, setClients] = useState<Client[]>([]);
-  const [stats, setStats] = useState({ total: 0, lokal: 0, publik: 0 });
+  const [clients, setClients] = useState<Client[]>(() => store.getClients());
+  const [stats, setStats] = useState(() => store.getClientStats());
   const [filter, setFilter] = useState<Filter>('semua');
 
   useFocusEffect(
     useCallback(() => {
-      setClients(store.getClients());
-      setStats(store.getClientStats());
+      const raf = requestAnimationFrame(() => {
+        startTransition(() => {
+          setClients(store.getClients());
+          setStats(store.getClientStats());
+        });
+      });
+      return () => cancelAnimationFrame(raf);
     }, [])
   );
 

@@ -2,7 +2,7 @@
  * NetKit MD3 - Tools Screen
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, startTransition } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import {
   Appbar,
@@ -24,11 +24,16 @@ const TOOLS = [
 
 export function ToolsScreenMD3({ navigation }: any) {
   const theme = useTheme();
-  const [runs, setRuns] = useState<ToolRun[]>([]);
+  const [runs, setRuns] = useState<ToolRun[]>(() => store.getToolRuns());
 
   useFocusEffect(
     useCallback(() => {
-      setRuns(store.getToolRuns());
+      const raf = requestAnimationFrame(() => {
+        startTransition(() => {
+          setRuns(store.getToolRuns());
+        });
+      });
+      return () => cancelAnimationFrame(raf);
     }, [])
   );
 

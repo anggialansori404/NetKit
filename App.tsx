@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { StatusBar, View, StyleSheet, useColorScheme } from 'react-native';
+import { StatusBar, View, StyleSheet, useColorScheme, Animated, Easing } from 'react-native';
 import { PaperProvider, FAB, useTheme, MD3Theme } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { NavigationContainer, DarkTheme as NavDarkTheme, DefaultTheme as NavLightTheme } from '@react-navigation/native';
@@ -30,7 +30,59 @@ import { SshTerminalScreenMD3 } from './src/screens/SshTerminalScreenMD3';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-function tabIcon(routeName: string, focused: boolean, color: string, size: number, theme: MD3Theme) {
+// Material Design 3 Fade-Through Scene Transition (scale 0.96 -> 1.0 + cross-fade)
+const forFadeThrough = ({ current }: { current: { progress: any } }) => ({
+  sceneStyle: {
+    opacity: current.progress.interpolate({
+      inputRange: [-1, 0, 1],
+      outputRange: [0, 1, 0],
+      extrapolate: 'clamp',
+    }),
+    transform: [
+      {
+        scale: current.progress.interpolate({
+          inputRange: [-1, 0, 1],
+          outputRange: [0.96, 1, 0.96],
+          extrapolate: 'clamp',
+        }),
+      },
+    ],
+  },
+});
+
+const tabTransitionSpec = {
+  animation: 'timing' as const,
+  config: {
+    duration: 220,
+    easing: Easing.out(Easing.cubic),
+  },
+};
+
+// M3 Active Tab Indicator Pill with animated scaleX & opacity
+const TabIconItem = React.memo(function TabIconItem({
+  routeName,
+  focused,
+  color,
+  size,
+  theme,
+}: {
+  routeName: string;
+  focused: boolean;
+  color: string;
+  size: number;
+  theme: MD3Theme;
+}) {
+  const anim = React.useRef(new Animated.Value(focused ? 1 : 0)).current;
+
+  React.useEffect(() => {
+    Animated.timing(anim, {
+      toValue: focused ? 1 : 0,
+      duration: 200,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [focused, anim]);
+
   const icons: Record<string, [string, string]> = {
     KlienTab: ['bank', 'bank-outline'],
     ToolsTab: ['wrench', 'wrench-outline'],
@@ -38,27 +90,46 @@ function tabIcon(routeName: string, focused: boolean, color: string, size: numbe
     SFTPTab: ['folder', 'folder-outline'],
   };
   const [f, u] = icons[routeName] || ['circle', 'circle-outline'];
+
   return (
-    <View
-      style={{
-        width: 64,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: focused ? theme.colors.secondaryContainer : 'transparent',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
+    <View style={styles.tabIconWrapper}>
+      <Animated.View
+        style={[
+          styles.tabIndicatorPill,
+          {
+            backgroundColor: theme.colors.secondaryContainer,
+            opacity: anim,
+            transform: [
+              {
+                scaleX: anim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.5, 1],
+                }),
+              },
+            ],
+          },
+        ]}
+      />
       <MaterialCommunityIcons name={focused ? f : u} color={color} size={size} />
     </View>
   );
-}
+});
 
 // Bottom tabs — MD3 styled, smooth animated transitions + FAB
 function MainTabs({ navigation }: any) {
   const theme = useTheme();
   const [activeTab, setActiveTab] = React.useState('KlienTab');
   const insets = useSafeAreaInsets();
+  const fabAnim = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    Animated.timing(fabAnim, {
+      toValue: activeTab === 'ToolsTab' ? 0 : 1,
+      duration: 200,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [activeTab, fabAnim]);
 
   const handleFabPress = () => {
     if (activeTab === 'KlienTab') {
@@ -89,13 +160,22 @@ function MainTabs({ navigation }: any) {
             fontWeight: '500',
             marginBottom: 8,
           },
-          // M3 active indicator pill: 64x32dp, cornerRadius 16dp, secondaryContainer fill
           tabBarItemStyle: {
             borderRadius: 16,
           },
-          tabBarIcon: ({ focused, color, size }: { focused: boolean; color: string; size: number }) => tabIcon(route.name, focused, color, size, theme),
-          animation: 'shift',
-          lazy: false,
+          tabBarIcon: ({ focused, color, size }: { focused: boolean; color: string; size: number }) => (
+            <TabIconItem
+              routeName={route.name}
+              focused={focused}
+              color={color}
+              size={size}
+              theme={theme}
+            />
+          ),
+          sceneStyleInterpolator: forFadeThrough,
+          transitionSpec: tabTransitionSpec,
+          freezeOnBlur: true,
+          lazy: true,
         })}
         screenListeners={{
           state: (e: any) => {
@@ -112,26 +192,48 @@ function MainTabs({ navigation }: any) {
         <Tab.Screen name="SSHTab" component={SshScreenMD3} options={{ title: 'SSH' }} />
         <Tab.Screen name="SFTPTab" component={SftpScreenMD3} options={{ title: 'SFTP' }} />
       </Tab.Navigator>
-      {activeTab !== 'ToolsTab' && (
-        // M3 FAB: primaryContainer fill, 16dp corner radius
+      <Animated.View
+        style={[
+          styles.fabWrapper,
+          {
+            bottom: 80 + insets.bottom,
+            opacity: fabAnim,
+            transform: [{ scale: fabAnim }],
+          },
+        ]}
+        pointerEvents={activeTab === 'ToolsTab' ? 'none' : 'auto'}
+      >
         <FAB
           icon="plus"
-          style={[styles.fab, { bottom: 80 + insets.bottom, backgroundColor: theme.colors.primaryContainer }]}
+          style={[styles.fab, { backgroundColor: theme.colors.primaryContainer }]}
           color={theme.colors.onPrimaryContainer}
           onPress={handleFabPress}
         />
-      )}
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   tabsContainer: { flex: 1 },
-  fab: {
+  tabIconWrapper: {
+    width: 64,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  tabIndicatorPill: {
     position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 80,
+    width: 64,
+    height: 32,
+    borderRadius: 16,
+  },
+  fabWrapper: {
+    position: 'absolute',
+    right: 16,
+  },
+  fab: {
     borderRadius: 16,
   },
 });

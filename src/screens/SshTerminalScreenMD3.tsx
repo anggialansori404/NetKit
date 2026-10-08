@@ -21,7 +21,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeModules } from 'react-native';
 // @ts-ignore
-import SSHClient, { PtyType } from 'react-native-ssh-client';
+import SSHClient, { PtyType } from '@dylankenneally/react-native-ssh-sftp';
 
 const XTERM_HTML = `
 <!DOCTYPE html>

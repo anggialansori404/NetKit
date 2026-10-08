@@ -66,6 +66,15 @@ test('store SSH sessions and ToolRuns', () => {
   assert.equal(sess.nama, 'test-gw');
   assert.ok(sess.secretRef.startsWith('sec_'));
 
+  // Get session by ID
+  const foundSess = store.getSessionById(sess.id);
+  assert.ok(foundSess);
+  assert.equal(foundSess.nama, 'test-gw');
+  assert.equal(foundSess.host, '10.0.0.1');
+
+  const notFound = store.getSessionById('non-existent-id');
+  assert.equal(notFound, undefined);
+
   const run = store.addToolRun({
     tool: 'PING',
     target: '1.1.1.1',

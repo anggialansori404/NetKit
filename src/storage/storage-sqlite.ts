@@ -152,6 +152,13 @@ export function getSessions(): SshSession[] {
   return (rows.rows || []) as unknown as SshSession[];
 }
 
+export function getSessionById(id: string): SshSession | undefined {
+  const database = getDb();
+  const rows = database.executeSync(`SELECT * FROM ssh_sessions WHERE id = ?`, [id]);
+  const arr = (rows.rows || []) as unknown as SshSession[];
+  return arr[0];
+}
+
 export function addSession(session: Omit<SshSession, 'id'>): SshSession {
   const database = getDb();
   const id = genId('s');
@@ -193,6 +200,7 @@ export const store = {
   deleteClient,
   getClientStats,
   getSessions,
+  getSessionById,
   addSession,
   deleteSession,
   getToolRuns,

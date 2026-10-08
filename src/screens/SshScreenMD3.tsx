@@ -65,7 +65,7 @@ export function SshScreenMD3({ navigation }: any) {
           <Card
             mode="outlined"
             style={styles.card}
-            onPress={() => navigation.navigate('SshTerminal', { sessionId: item.id })}
+            onPress={() => navigation.navigate('SshTerminal', { sessionId: item.id, session: item })}
           >
             <Card.Title
               title={item.nama}

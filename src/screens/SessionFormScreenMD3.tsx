@@ -20,7 +20,7 @@ export function SessionFormScreenMD3({ navigation, route }: any) {
   const theme = useTheme();
   const { sessionId } = route.params || {};
   const existing = sessionId
-    ? store.getSessions().find((s) => s.id === sessionId)
+    ? store.getSessionById(sessionId) || store.getSessions().find((s) => s.id === sessionId)
     : undefined;
 
   const [nama, setNama] = useState(existing?.nama || '');

@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeModules } from 'react-native';
 // @ts-ignore
 import SSHClient, { PtyType } from '@dylankenneally/react-native-ssh-sftp';
+import { store, SshSession } from '../storage/storage-sqlite';
 
 const XTERM_HTML = `
 <!DOCTYPE html>
@@ -200,7 +201,12 @@ const TerminalWebView = WebView as any;
 
 export function SshTerminalScreenMD3({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
-  const session = route.params?.session;
+  const routeSession: SshSession | undefined = route.params?.session;
+  const sessionId: string | undefined = route.params?.sessionId || routeSession?.id;
+  const session: SshSession | undefined =
+    (sessionId ? store.getSessionById(sessionId) : undefined) ||
+    routeSession ||
+    (sessionId ? store.getSessions().find((s) => s.id === sessionId) : undefined);
 
   const webviewRef = useRef<WebView>(null);
   const [connected, setConnected] = useState(false);

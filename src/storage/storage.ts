@@ -192,6 +192,10 @@ class MemoryStore {
     return [...this.sessions];
   }
 
+  getSessionById(id: string): SshSession | undefined {
+    return this.sessions.find((s) => s.id === id);
+  }
+
   addSession(session: Omit<SshSession, 'id'>, secretValue?: string): SshSession {
     const id = 's_' + Math.random().toString(36).substring(2, 9);
     const secretRef = 'sec_' + id;

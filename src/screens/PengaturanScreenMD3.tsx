@@ -11,8 +11,10 @@ import {
   Divider,
   useTheme,
 } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function PengaturanScreenMD3({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const theme = useTheme();
 
   return (
@@ -22,7 +24,7 @@ export function PengaturanScreenMD3({ navigation }: any) {
         <Appbar.Content title="Pengaturan" />
       </Appbar.Header>
 
-      <ScrollView style={styles.scroll}>
+      <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 24 + insets.bottom }}>
         <List.Section>
           <List.Subheader>Tampilan</List.Subheader>
           <List.Item

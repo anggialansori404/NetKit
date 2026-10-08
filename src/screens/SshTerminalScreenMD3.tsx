@@ -1,35 +1,54 @@
-/**
- * NetKit MD3 - SSH Terminal Screen
- * Full pty terminal: xterm.js in WebView + SSH shell channel.
- */
-
-import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Platform,
+  TouchableOpacity,
+  StatusBar,
+  BackHandler,
+} from 'react-native';
 import { WebView } from 'react-native-webview';
 import {
   Appbar,
   Text,
-  IconButton,
   Portal,
   Dialog,
   TextInput,
   Button,
-  useTheme,
 } from 'react-native-paper';
-import SSHClient, { PtyType } from '@dylankenneally/react-native-ssh-sftp';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeModules } from 'react-native';
-import { store } from '../storage/storage-sqlite';
+// @ts-ignore
+import SSHClient, { PtyType } from 'react-native-ssh-client';
 
-// xterm.js HTML — terminal emulator in WebView
 const XTERM_HTML = `
 <!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
-  html, body { margin: 0; padding: 0; background: #1D1B20; height: 100%; overflow: hidden; }
-  #terminal { height: 100%; padding: 8px; }
-  .xterm { height: 100%; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #000000;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+  #terminal {
+    height: 100%;
+    width: 100%;
+    padding: 4px 6px;
+  }
+  .xterm {
+    height: 100%;
+  }
+  .xterm-viewport {
+    background-color: #000000 !important;
+  }
 </style>
 <link rel="stylesheet" href="file:///android_asset/xterm.css">
 </head>
@@ -38,54 +57,101 @@ const XTERM_HTML = `
 <script src="file:///android_asset/xterm.js"></script>
 <script src="file:///android_asset/xterm-addon-fit.js"></script>
 <script>
-  function notifyError(msg) {
+  function log(msg) {
     if (window.ReactNativeWebView) {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'error', data: msg }));
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'debug', data: msg }));
     }
   }
 
   function initTerminal() {
     try {
       window.term = new Terminal({
-        theme: { background: '#1D1B20', foreground: '#E6E0E9' },
-        fontSize: 14,
+        theme: {
+          background: '#000000',
+          foreground: '#E6EDF3',
+          cursor: '#22C55E',
+          cursorAccent: '#000000',
+          selectionBackground: '#264F78',
+          black: '#000000',
+          red: '#EF4444',
+          green: '#22C55E',
+          yellow: '#EAB308',
+          blue: '#3B82F6',
+          magenta: '#A855F7',
+          cyan: '#06B6D4',
+          white: '#E6EDF3',
+          brightBlack: '#4B5563',
+          brightRed: '#F87171',
+          brightGreen: '#4ADE80',
+          brightYellow: '#FDE047',
+          brightBlue: '#60A5FA',
+          brightMagenta: '#C084FC',
+          brightCyan: '#22D3EE',
+          brightWhite: '#FFFFFF',
+        },
+        fontSize: 13,
         fontFamily: '"JetBrains Mono", "DejaVu Sans Mono", monospace',
         cursorBlink: true,
         cursorStyle: 'block',
-        scrollback: 1000,
+        scrollback: 2000,
         allowProposedApi: true,
       });
-      // Fit addon — optional, jangan gagal kalau tidak ada
+
       try {
         if (typeof FitAddon !== 'undefined') {
           window.fitAddon = new FitAddon.FitAddon();
           window.term.loadAddon(window.fitAddon);
         }
       } catch (fitErr) {}
+
       window.term.open(document.getElementById('terminal'));
       try {
         if (window.fitAddon) window.fitAddon.fit();
       } catch (e) {}
-      // Re-fit saat orientasi berubah
+
       window.addEventListener('resize', function() {
         try { if (window.fitAddon) window.fitAddon.fit(); } catch(e) {}
       });
-      window.term.writeln('NetKit SSH Terminal');
-      window.term.writeln('Menghubungkan...\\r\\n');
+
+      window.term.writeln('\\x1b[1;32mNetKit Terminal\\x1b[0m (SSH)');
+      window.term.writeln('\\x1b[90mMenghubungkan...\\x1b[0m\\r\\n');
+
+      var isCtrl = false;
+      var isAlt = false;
 
       window.term.onData(function(data) {
-        // Local echo dengan handling khusus untuk backspace/delete
+        if (isCtrl) {
+          isCtrl = false;
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrlReset' }));
+          }
+          if (data.length === 1) {
+            var code = data.charCodeAt(0);
+            if (code >= 97 && code <= 122) {
+              data = String.fromCharCode(code - 96);
+            } else if (code >= 65 && code <= 90) {
+              data = String.fromCharCode(code - 64);
+            } else if (data === ' ') {
+              data = '\\x00';
+            }
+          }
+        } else if (isAlt) {
+          isAlt = false;
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'altReset' }));
+          }
+          data = '\\x1b' + data;
+        }
+
         if (data === '\\x7f' || data === '\\b') {
-          // Backspace: mundur, hapus char, mundur lagi
           window.term.write('\\b \\b');
         } else if (data === '\\r') {
-          // Enter: pindah baris
           window.term.write('\\r\\n');
         } else if (data.charCodeAt(0) < 32 && data !== '\\t') {
-          // Skip control chars lain (kecuali tab)
         } else {
           window.term.write(data);
         }
+
         if (window.ReactNativeWebView) {
           window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'input', data: data }));
         }
@@ -94,30 +160,33 @@ const XTERM_HTML = `
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ready' }));
       }
-    } catch (err) {
-      notifyError('Init terminal error: ' + err.message);
+    } catch (e) {
+      log('INIT_ERROR: ' + e.message);
     }
   }
 
-  // Fallback ke CDN jika local asset belum ada atau gagal
-  if (typeof Terminal === 'undefined') {
-    var cdnScript = document.createElement('script');
-    cdnScript.src = 'https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js';
-    cdnScript.onload = initTerminal;
-    cdnScript.onerror = function() {
-      notifyError('Gagal memuat xterm.js baik dari local asset maupun CDN');
-    };
-    document.head.appendChild(cdnScript);
-  } else {
+  if (typeof Terminal !== 'undefined') {
     initTerminal();
+  } else {
+    window.onload = function() {
+      if (typeof Terminal !== 'undefined') {
+        initTerminal();
+      } else {
+        log('LOAD_FAIL: Terminal is undefined');
+      }
+    };
   }
 
-  // Terima data dari React Native (dukung Android document dan iOS window)
   function handleRNMessage(e) {
     try {
       var msg = JSON.parse(e.data);
       if (msg.type === 'data' && window.term) window.term.write(msg.data);
       if (msg.type === 'clear' && window.term) window.term.clear();
+      if (msg.type === 'setCtrl') isCtrl = !!msg.value;
+      if (msg.type === 'setAlt') isAlt = !!msg.value;
+      if (msg.type === 'fit' && window.fitAddon) {
+        try { window.fitAddon.fit(); } catch(err) {}
+      }
     } catch(err) {}
   }
   window.addEventListener('message', handleRNMessage);
@@ -128,70 +197,102 @@ const XTERM_HTML = `
 `;
 
 export function SshTerminalScreenMD3({ navigation, route }: any) {
-  const theme = useTheme();
-  const { sessionId } = route.params;
-  const session = store.getSessions().find((s) => s.id === sessionId);
-  const webviewRef = useRef<any>(null);
+  const insets = useSafeAreaInsets();
+  const session = route.params?.session;
+
+  const webviewRef = useRef<WebView>(null);
   const [connected, setConnected] = useState(false);
-  const [status, setStatus] = useState('Menghubungkan...');
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [status, setStatus] = useState('Menginisialisasi...');
   const [password, setPassword] = useState('');
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [terminalReady, setTerminalReady] = useState(false);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
-  const [showDebug, setShowDebug] = useState(true);
+  const [showDebug, setShowDebug] = useState(false);
+  const [ctrlActive, setCtrlActive] = useState(false);
+  const [altActive, setAltActive] = useState(false);
   const sshClientRef = useRef<any>(null);
 
-  // Tambah log ke debug panel native (selalu terlihat, tidak bergantung WebView)
   const addDebugLog = (msg: string) => {
-    const ts = new Date().toLocaleTimeString('id-ID', { hour12: false });
-    setDebugLogs((prev) => [...prev.slice(-49), `[${ts}] ${msg}`]);
+    const time = new Date().toTimeString().slice(0, 8);
+    setDebugLogs((prev: string[]) => [`[${time}] ${msg}`, ...prev.slice(0, 99)]);
   };
-
-  // Fallback: jika WebView tidak kirim 'ready' dalam 3 detik, tampilkan dialog password anyway
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!terminalReady) {
-        addDebugLog('[WARN] WebView xterm.js timeout (3s), membuka dialog password');
-        connectSsh();
-      }
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [terminalReady]);
-
-  // Cleanup saat unmount
-  useEffect(() => {
-    return () => {
-      try {
-        sshClientRef.current?.closeShell();
-        sshClientRef.current?.disconnect();
-      } catch (e) {}
-    };
-  }, []);
 
   const sendToTerminal = (data: string) => {
-    // Kirim ke WebView (jika siap)
-    try {
-      webviewRef.current?.postMessage(JSON.stringify({ type: 'data', data }));
-    } catch (e) {}
-    // SELALU catat ke debug log native (fallback jika WebView gagal)
-    const clean = data.replace(/\x1b\[[0-9;]*m/g, '').trim();
-    if (clean) {
-      addDebugLog(clean);
+    if (webviewRef.current) {
+      webviewRef.current.postMessage(JSON.stringify({ type: 'data', data }));
     }
   };
+
+  const confirmDisconnectAndLeave = useCallback(() => {
+    if (connected) {
+      Alert.alert(
+        'Putuskan Sesi SSH?',
+        'Sesi terminal sedang aktif. Keluar akan memutuskan koneksi.',
+        [
+          { text: 'Batal', style: 'cancel' },
+          {
+            text: 'Putuskan & Keluar',
+            style: 'destructive',
+            onPress: () => {
+              try {
+                sshClientRef.current?.closeShell();
+                sshClientRef.current?.disconnect();
+              } catch (e) {}
+              navigation.goBack();
+            },
+          },
+        ]
+      );
+    } else {
+      navigation.goBack();
+    }
+  }, [connected, navigation]);
+
+  useEffect(() => {
+    const backAction = () => {
+      if (connected) {
+        confirmDisconnectAndLeave();
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => backHandler.remove();
+  }, [connected, confirmDisconnectAndLeave]);
+
+  useEffect(() => {
+    if (terminalReady) {
+      connectSsh();
+    }
+  }, [terminalReady]);
+
+  useEffect(() => {
+    return () => {
+      if (sshClientRef.current) {
+        try {
+          sshClientRef.current.closeShell();
+          sshClientRef.current.disconnect();
+        } catch (e) {}
+      }
+    };
+  }, []);
 
   const handleMessage = (event: any) => {
     try {
       const msg = JSON.parse(event.nativeEvent.data);
       if (msg.type === 'ready') {
         setTerminalReady(true);
-        addDebugLog('Terminal xterm.js siap');
-        connectSsh();
+        setStatus('Terminal siap');
       } else if (msg.type === 'input') {
         if (sshClientRef.current && connected) {
           sshClientRef.current.writeToShell(msg.data).catch(() => {});
         }
+      } else if (msg.type === 'ctrlReset') {
+        setCtrlActive(false);
+      } else if (msg.type === 'altReset') {
+        setAltActive(false);
       } else if (msg.type === 'error') {
         addDebugLog(`[WebView Error] ${msg.data}`);
         setShowDebug(true);
@@ -206,7 +307,6 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
       return;
     }
 
-    // Minta password dulu
     setShowPasswordDialog(true);
     setStatus('Menunggu password...');
     sendToTerminal(`\r\nSesi: ${session.nama} (${session.username}@${session.host}:${session.port})\r\n`);
@@ -219,9 +319,9 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
       return;
     }
     setShowPasswordDialog(false);
-    setStatus(`Menghubungkan ke ${session.host}...`);
+    setStatus('Menghubungkan ke ' + session.host + '...');
 
-    // DEBUG: cek native module
+    const { NativeModules } = await import('react-native');
     const { RNSSHClient } = NativeModules;
     const nativeMsg = `Native module RNSSHClient: ${RNSSHClient ? 'ADA' : 'TIDAK ADA'}`;
     addDebugLog(nativeMsg);
@@ -264,11 +364,9 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
       sendToTerminal('[DEBUG] Shell dibuka.\r\n');
 
       client.on('Shell', (event: any) => {
-        // Native kirim {name, key, value} — ambil value-nya saja
-        const output = typeof event === 'string' ? event : event?.value;
-        if (output) {
-          addDebugLog(`[SHELL] ${output.substring(0, 100)}`);
-          sendToTerminal(output);
+        const data = typeof event === 'object' ? event?.value || '' : String(event);
+        if (data) {
+          sendToTerminal(data);
         }
       });
 
@@ -282,70 +380,131 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
       setStatus(`Gagal: ${msg}`);
       Alert.alert(
         'Gagal Terhubung',
-        `Error: ${msg}`,
-        [
-          { text: 'Coba Lagi', onPress: () => setShowPasswordDialog(true) },
-          { text: 'Batal', style: 'cancel' },
-        ]
+        `${msg}\n\nPeriksa host, port, username, password, dan koneksi jaringan.`,
+        [{ text: 'OK' }]
       );
     }
   };
 
-  const sendKey = (key: string) => {
-    // Kirim special key ke terminal
-    const keys: Record<string, string> = {
-      'Esc': '\x1b',
-      'Tab': '\t',
-      'Ctrl+C': '\x03',
-      'Ctrl+D': '\x04',
-      'Up': '\x1b[A',
-      'Down': '\x1b[B',
-      'Left': '\x1b[D',
-      'Right': '\x1b[C',
-    };
-    sendToTerminal(keys[key] || key);
+  const handleKeyPress = (key: string) => {
+    if (key === 'CTRL') {
+      const next = !ctrlActive;
+      setCtrlActive(next);
+      webviewRef.current?.postMessage(JSON.stringify({ type: 'setCtrl', value: next }));
+      return;
+    }
+    if (key === 'ALT') {
+      const next = !altActive;
+      setAltActive(next);
+      webviewRef.current?.postMessage(JSON.stringify({ type: 'setAlt', value: next }));
+      return;
+    }
+
+    let sendData = '';
+    switch (key) {
+      case 'ESC': sendData = '\x1b'; break;
+      case 'TAB': sendData = '\t'; break;
+      case '▲': sendData = '\x1b[A'; break;
+      case '▼': sendData = '\x1b[B'; break;
+      case '◀': sendData = '\x1b[D'; break;
+      case '▶': sendData = '\x1b[C'; break;
+      case '-': sendData = '-'; break;
+      case '/': sendData = '/'; break;
+      case '|': sendData = '|'; break;
+      case '~': sendData = '~'; break;
+      default: sendData = key;
+    }
+
+    if (ctrlActive) {
+      setCtrlActive(false);
+      webviewRef.current?.postMessage(JSON.stringify({ type: 'setCtrl', value: false }));
+      if (sendData.length === 1) {
+        const c = sendData.toLowerCase().charCodeAt(0);
+        if (c >= 97 && c <= 122) {
+          sendData = String.fromCharCode(c - 96);
+        }
+      }
+    }
+
+    if (altActive) {
+      setAltActive(false);
+      webviewRef.current?.postMessage(JSON.stringify({ type: 'setAlt', value: false }));
+      sendData = '\x1b' + sendData;
+    }
+
+    if (sshClientRef.current && connected) {
+      sshClientRef.current.writeToShell(sendData).catch(() => {});
+    }
+
+    if (sendData === '\x1b' || sendData.startsWith('\x1b[')) {
+      webviewRef.current?.postMessage(JSON.stringify({ type: 'data', data: sendData }));
+    }
+  };
+
+  const getStatusDotColor = () => {
+    if (connected) return '#22C55E';
+    if (status.includes('Gagal') || status.includes('tidak')) return '#EF4444';
+    return '#EAB308';
   };
 
   if (!session) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <Appbar.Header>
-          <Appbar.BackAction onPress={() => navigation.goBack()} />
-          <Appbar.Content title="Sesi tidak ditemukan" />
+      <View style={[styles.container, { backgroundColor: '#000000' }]}>
+        <Appbar.Header style={styles.header}>
+          <Appbar.BackAction color="#E0E0E0" onPress={() => navigation.goBack()} />
+          <Appbar.Content title="Sesi tidak ditemukan" titleStyle={styles.headerTitle} />
         </Appbar.Header>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: '#1D1B20' }]}>
-      <Appbar.Header style={{ backgroundColor: theme.colors.surface }}>
-        <Appbar.BackAction onPress={() => navigation.goBack()} />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#121212" />
+      <Appbar.Header style={styles.header}>
+        <Appbar.BackAction color="#E0E0E0" onPress={confirmDisconnectAndLeave} />
         <Appbar.Content
           title={session.nama}
-          subtitle={`${session.username}@${session.host}:${session.port} · ${status}`}
+          titleStyle={styles.headerTitle}
+          subtitle={
+            <View style={styles.subtitleRow}>
+              <View style={[styles.statusDot, { backgroundColor: getStatusDotColor() }]} />
+              <Text style={styles.subtitleText}>
+                {`${session.username}@${session.host}:${session.port}`}
+              </Text>
+            </View>
+          }
+        />
+        <Appbar.Action
+          icon="broom"
+          color="#A0A0A0"
+          onPress={() => {
+            webviewRef.current?.postMessage(JSON.stringify({ type: 'clear' }));
+          }}
         />
         <Appbar.Action
           icon="bug-outline"
+          color={showDebug ? '#22C55E' : '#707070'}
           onPress={() => setShowDebug(!showDebug)}
         />
       </Appbar.Header>
 
-      {/* Debug panel native — selalu terlihat, tidak bergantung WebView */}
       {showDebug && (
-        <View style={[styles.debugPanel, { backgroundColor: theme.colors.surfaceVariant }]}>
+        <View style={styles.debugPanel}>
           <View style={styles.debugHeader}>
-            <Text variant="labelLarge">Debug Log</Text>
-            <Button compact onPress={() => setDebugLogs([])}>Clear</Button>
+            <Text style={styles.debugTitle}>Debug Log</Text>
+            <Button compact textColor="#22C55E" onPress={() => setDebugLogs([])}>
+              Clear
+            </Button>
           </View>
           <ScrollView style={styles.debugScroll}>
             {debugLogs.length === 0 ? (
-              <Text variant="bodySmall" style={{ opacity: 0.6 }}>
-                Belum ada log. Coba hubungkan untuk melihat debug output.
+              <Text style={{ color: '#777777', fontSize: 11 }}>
+                Belum ada log.
               </Text>
             ) : (
-              debugLogs.map((log, i) => (
-                <Text key={i} variant="bodySmall" style={styles.debugText} selectable>
+              debugLogs.map((log: string, i: number) => (
+                <Text key={i} style={styles.debugText} selectable>
                   {log}
                 </Text>
               ))
@@ -368,38 +527,37 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
         allowFileAccessFromFileURLs={true}
         allowUniversalAccessFromFileURLs={true}
         originWhitelist={['*']}
-        onError={(e) => {
+        onError={(e: any) => {
           addDebugLog(`[WebView Load Error] ${e.nativeEvent.description}`);
           setShowDebug(true);
         }}
       />
 
-      {/* Extra key row: Esc, Tab, Ctrl, Arrows */}
-      <View style={[styles.keyRow, { backgroundColor: theme.colors.surfaceVariant }]}>
-        {['Esc', 'Tab', 'Ctrl+C', 'Ctrl+D', 'Up', 'Down', 'Left', 'Right'].map((k) => (
-          <IconButton
-            key={k}
-            icon={
-              k === 'Up' ? 'chevron-up' :
-              k === 'Down' ? 'chevron-down' :
-              k === 'Left' ? 'chevron-left' :
-              k === 'Right' ? 'chevron-right' : 'keyboard'
-            }
-            size={20}
-            onPress={() => sendKey(k)}
-            style={styles.keyButton}
-          />
-        ))}
-      </View>
-      <View style={[styles.keyLabels, { backgroundColor: theme.colors.surfaceVariant }]}>
-        {['Esc', 'Tab', 'C', 'D', '↑', '↓', '←', '→'].map((k, i) => (
-          <Text key={i} variant="labelSmall" style={styles.keyLabel}>
-            {k}
-          </Text>
-        ))}
+      <View style={[styles.accessoryBar, { paddingBottom: Math.max(insets.bottom, 6) }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="always"
+          contentContainerStyle={styles.accessoryContent}
+        >
+          {['ESC', 'TAB', 'CTRL', 'ALT', '-', '/', '|', '~', '▲', '▼', '◀', '▶'].map((key) => {
+            const isActive = (key === 'CTRL' && ctrlActive) || (key === 'ALT' && altActive);
+            return (
+              <TouchableOpacity
+                key={key}
+                activeOpacity={0.6}
+                onPress={() => handleKeyPress(key)}
+                style={[styles.keyTile, isActive && styles.keyTileActive]}
+              >
+                <Text style={[styles.keyTileText, isActive && styles.keyTileTextActive]}>
+                  {key}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
-      {/* Password dialog */}
       <Portal>
         <Dialog visible={showPasswordDialog} onDismiss={() => navigation.goBack()}>
           <Dialog.Title>Password SSH</Dialog.Title>
@@ -436,42 +594,106 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  webview: { flex: 1, backgroundColor: '#1D1B20' },
-  debugPanel: {
-    maxHeight: 200,
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  header: {
+    backgroundColor: '#121212',
     borderBottomWidth: 1,
-    borderBottomColor: '#CAC4D0',
+    borderBottomColor: '#242424',
+    elevation: 0,
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: Platform.OS === 'android' ? 'monospace' : 'Menlo',
+  },
+  subtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
+  },
+  subtitleText: {
+    color: '#9E9E9E',
+    fontSize: 11,
+    fontFamily: Platform.OS === 'android' ? 'monospace' : 'Menlo',
+  },
+  webview: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  debugPanel: {
+    maxHeight: 180,
+    backgroundColor: '#181818',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333333',
   },
   debugHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: '#282828',
+  },
+  debugTitle: {
+    color: '#AAAAAA',
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: 'monospace',
   },
   debugScroll: {
-    maxHeight: 150,
+    maxHeight: 140,
     paddingHorizontal: 12,
-    paddingBottom: 8,
+    paddingVertical: 4,
   },
   debugText: {
+    color: '#CCCCCC',
     fontFamily: 'monospace',
     fontSize: 11,
     marginBottom: 2,
   },
-  keyRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 4,
+  accessoryBar: {
+    backgroundColor: '#161616',
     borderTopWidth: 1,
-    borderTopColor: '#CAC4D0',
+    borderTopColor: '#282828',
+    paddingTop: 4,
   },
-  keyLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingBottom: 8,
+  accessoryContent: {
+    paddingHorizontal: 6,
+    alignItems: 'center',
   },
-  keyLabel: { fontSize: 10, opacity: 0.7, width: 40, textAlign: 'center' },
-  keyButton: { margin: 0, width: 40 },
+  keyTile: {
+    backgroundColor: '#262626',
+    borderRadius: 4,
+    minWidth: 38,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 3,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: '#383838',
+  },
+  keyTileActive: {
+    backgroundColor: '#22C55E',
+    borderColor: '#4ADE80',
+  },
+  keyTileText: {
+    color: '#E0E0E0',
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: Platform.OS === 'android' ? 'monospace' : 'Menlo',
+  },
+  keyTileTextActive: {
+    color: '#000000',
+  },
 });

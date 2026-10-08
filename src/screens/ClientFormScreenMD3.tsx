@@ -10,12 +10,15 @@ import {
   Button,
   SegmentedButtons,
   Text,
+  HelperText,
   useTheme,
 } from 'react-native-paper';
 import { store } from '../storage/storage-sqlite';
 import { isPrivateIp } from '../engine/network';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function ClientFormScreenMD3({ navigation, route }: any) {
+  const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { clientId } = route.params || {};
   const existing = clientId ? store.getClients().find((c) => c.id === clientId) : undefined;
@@ -30,8 +33,13 @@ export function ClientFormScreenMD3({ navigation, route }: any) {
   const [ipJenis, setIpJenis] = useState<'lokal' | 'publik' | ''>(
     existing?.ipJenis || ''
   );
+  const [submitted, setSubmitted] = useState(false);
+
+  const namaError = submitted && !nama.trim();
+  const ipError = submitted && !ip.trim();
 
   const handleSave = () => {
+    setSubmitted(true);
     if (!nama.trim() || !ip.trim()) return;
     const data = {
       namaBpr: nama.trim(),
@@ -57,54 +65,73 @@ export function ClientFormScreenMD3({ navigation, route }: any) {
         <Appbar.Content title={existing ? 'Edit Klien' : 'Tambah Klien'} />
       </Appbar.Header>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 24 + insets.bottom }]}>
+
         <TextInput
-          label="Nama BPR"
+          label="Nama BPR *"
           value={nama}
           onChangeText={setNama}
           mode="outlined"
-          dense
           style={styles.input}
+          error={namaError}
         />
+        <HelperText type={namaError ? 'error' : 'info'} visible>
+          {namaError ? 'Nama BPR wajib diisi.' : 'Contoh: BPR Artha Prima'}
+        </HelperText>
+
         <TextInput
           label="Alamat"
           value={alamat}
           onChangeText={setAlamat}
           mode="outlined"
-          dense
           style={styles.input}
         />
+        <HelperText type="info" visible>
+          Alamat kantor lembaga.
+        </HelperText>
+
         <TextInput
-          label="IP Gateway"
+          label="IP Gateway *"
           value={ip}
           onChangeText={setIp}
           mode="outlined"
-          dense
           autoCapitalize="none"
           autoCorrect={false}
+          keyboardType="decimal-pad"
           style={styles.input}
+          error={ipError}
         />
+        <HelperText type={ipError ? 'error' : 'info'} visible>
+          {ipError ? 'IP Gateway wajib diisi.' : 'Contoh: 192.168.1.1 atau 103.xxx.xxx.xxx'}
+        </HelperText>
+
         <TextInput
           label="Port"
           value={port}
           onChangeText={setPort}
           mode="outlined"
-          dense
           keyboardType="numeric"
           style={styles.input}
         />
+        <HelperText type="info" visible>
+          Port default: 22 (SSH) atau 8080.
+        </HelperText>
+
         <TextInput
           label="IP VPN (opsional)"
           value={ipVpn}
           onChangeText={setIpVpn}
           mode="outlined"
-          dense
           autoCapitalize="none"
           autoCorrect={false}
+          keyboardType="decimal-pad"
           style={styles.input}
         />
+        <HelperText type="info" visible>
+          IP lokal lembaga lewat VPN, jika ada.
+        </HelperText>
 
-        <Text variant="labelLarge" style={styles.label}>
+        <Text variant="labelLarge" style={styles.sectionLabel}>
           Jenis IP Gateway
         </Text>
         <SegmentedButtons
@@ -118,10 +145,10 @@ export function ClientFormScreenMD3({ navigation, route }: any) {
           style={styles.input}
         />
         {ip.trim() ? (
-          <Text variant="bodySmall" style={styles.hint}>
+          <HelperText type="info" visible>
             Terdeteksi: {isPrivateIp(ip.trim()) ? 'lokal' : 'publik'}
             {ipJenis ? ` · dipakai: ${ipJenis}` : ' · dipakai: otomatis'}
-          </Text>
+          </HelperText>
         ) : null}
 
         <TextInput
@@ -129,11 +156,14 @@ export function ClientFormScreenMD3({ navigation, route }: any) {
           value={catatan}
           onChangeText={setCatatan}
           mode="outlined"
-          dense
           multiline
           numberOfLines={3}
           style={styles.input}
         />
+        <HelperText type="info" visible>
+          Contoh: PIC Pak Dedi 0812-xxx-xxxx
+        </HelperText>
+
         <Button mode="contained" onPress={handleSave} style={styles.save}>
           Simpan
         </Button>
@@ -145,8 +175,7 @@ export function ClientFormScreenMD3({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16 },
-  input: { marginBottom: 12 },
-  label: { marginBottom: 8, opacity: 0.7 },
-  hint: { marginTop: -8, marginBottom: 12, opacity: 0.6 },
-  save: { marginTop: 8 },
+  input: { marginBottom: 0 },
+  sectionLabel: { marginBottom: 8, marginTop: 4, opacity: 0.7 },
+  save: { marginTop: 16 },
 });

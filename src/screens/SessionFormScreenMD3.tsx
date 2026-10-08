@@ -13,8 +13,10 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { store } from '../storage/storage-sqlite';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function SessionFormScreenMD3({ navigation, route }: any) {
+  const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { sessionId } = route.params || {};
   const existing = sessionId
@@ -56,7 +58,7 @@ export function SessionFormScreenMD3({ navigation, route }: any) {
         <Appbar.Content title={existing ? 'Edit Sesi SSH' : 'Tambah Sesi SSH'} />
       </Appbar.Header>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 24 + insets.bottom }]}>
         <TextInput
           label="Nama Sesi"
           value={nama}

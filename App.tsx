@@ -5,14 +5,14 @@
  */
 
 import React from 'react';
-import { StatusBar, View, StyleSheet } from 'react-native';
-import { PaperProvider, FAB } from 'react-native-paper';
+import { StatusBar, View, StyleSheet, useColorScheme } from 'react-native';
+import { PaperProvider, FAB, useTheme, MD3Theme } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme as NavDarkTheme, DefaultTheme as NavLightTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { md3Theme } from './src/ui/md3theme';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { md3Theme, md3DarkTheme } from './src/ui/md3theme';
 
 // Screens
 import { KlienScreenMD3 } from './src/screens/KlienScreenMD3';
@@ -30,7 +30,7 @@ import { SshTerminalScreenMD3 } from './src/screens/SshTerminalScreenMD3';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-function tabIcon(routeName: string, focused: boolean, color: string, size: number) {
+function tabIcon(routeName: string, focused: boolean, color: string, size: number, theme: MD3Theme) {
   const icons: Record<string, [string, string]> = {
     KlienTab: ['bank', 'bank-outline'],
     ToolsTab: ['wrench', 'wrench-outline'],
@@ -38,12 +38,27 @@ function tabIcon(routeName: string, focused: boolean, color: string, size: numbe
     SFTPTab: ['folder', 'folder-outline'],
   };
   const [f, u] = icons[routeName] || ['circle', 'circle-outline'];
-  return <MaterialCommunityIcons name={focused ? f : u} color={color} size={size} />;
+  return (
+    <View
+      style={{
+        width: 64,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: focused ? theme.colors.secondaryContainer : 'transparent',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      <MaterialCommunityIcons name={focused ? f : u} color={color} size={size} />
+    </View>
+  );
 }
 
 // Bottom tabs — MD3 styled, smooth animated transitions + FAB
 function MainTabs({ navigation }: any) {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = React.useState('KlienTab');
+  const insets = useSafeAreaInsets();
 
   const handleFabPress = () => {
     if (activeTab === 'KlienTab') {
@@ -56,20 +71,29 @@ function MainTabs({ navigation }: any) {
   return (
     <View style={styles.tabsContainer}>
       <Tab.Navigator
-        screenOptions={({ route }) => ({
+        screenOptions={({ route }: { route: any }) => ({
           headerShown: false,
-          tabBarActiveTintColor: md3Theme.colors.primary,
-          tabBarInactiveTintColor: md3Theme.colors.onSurfaceVariant,
+          // M3 Navigation Bar: active icon = onSecondaryContainer, inactive = onSurfaceVariant
+          tabBarActiveTintColor: theme.colors.onSecondaryContainer,
+          tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
           tabBarStyle: {
-            backgroundColor: md3Theme.colors.surfaceVariant,
+            // M3 Navigation Bar: 80dp height, surfaceContainer background, no divider
+            height: 80,
+            backgroundColor: theme.colors.surfaceContainer,
             borderTopWidth: 0,
-            elevation: 2,
+            elevation: 0,
           },
           tabBarLabelStyle: {
+            // M3 labelMedium: 12sp / 500
             fontSize: 12,
             fontWeight: '500',
+            marginBottom: 8,
           },
-          tabBarIcon: ({ focused, color, size }) => tabIcon(route.name, focused, color, size),
+          // M3 active indicator pill: 64x32dp, cornerRadius 16dp, secondaryContainer fill
+          tabBarItemStyle: {
+            borderRadius: 16,
+          },
+          tabBarIcon: ({ focused, color, size }: { focused: boolean; color: string; size: number }) => tabIcon(route.name, focused, color, size, theme),
           animation: 'shift',
           lazy: false,
         })}
@@ -89,9 +113,12 @@ function MainTabs({ navigation }: any) {
         <Tab.Screen name="SFTPTab" component={SftpScreenMD3} options={{ title: 'SFTP' }} />
       </Tab.Navigator>
       {activeTab !== 'ToolsTab' && (
+        // M3 FAB: primaryContainer fill, 16dp corner radius
         <FAB
           icon="plus"
-          style={styles.fab}
+          style={[styles.fab, { bottom: 80 + insets.bottom }]}
+          containerColor={theme.colors.primaryContainer}
+          color={theme.colors.onPrimaryContainer}
           onPress={handleFabPress}
         />
       )}
@@ -106,15 +133,24 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 80,
+    borderRadius: 16,
   },
 });
 
 export default function App() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const theme = isDark ? md3DarkTheme : md3Theme;
+  const navTheme = isDark ? NavDarkTheme : NavLightTheme;
+
   return (
     <SafeAreaProvider>
-      <PaperProvider theme={md3Theme}>
-        <StatusBar barStyle="dark-content" />
-        <NavigationContainer>
+      <PaperProvider theme={theme}>
+        <StatusBar
+          barStyle={isDark ? 'light-content' : 'dark-content'}
+          backgroundColor={theme.colors.surface}
+        />
+        <NavigationContainer theme={navTheme}>
           <Stack.Navigator
             initialRouteName="MainTabs"
             screenOptions={{

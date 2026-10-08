@@ -6,8 +6,10 @@ import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Appbar, Text, Card, useTheme } from 'react-native-paper';
 import { store } from '../storage/storage-sqlite';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function ToolDetailScreenMD3({ navigation, route }: any) {
+  const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { runId } = route.params;
   const run = store.getToolRuns().find((r) => r.id === runId);
@@ -29,7 +31,7 @@ export function ToolDetailScreenMD3({ navigation, route }: any) {
         <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content title={`${run.tool} · ${run.timestamp}`} />
       </Appbar.Header>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 24 + insets.bottom }]}>
         <Card>
           <Card.Content>
             <Text variant="bodyMedium"  selectable>

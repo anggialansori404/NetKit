@@ -1,17 +1,17 @@
 /**
  * NetKit MD3 - SSH Screen
- * Dengan hapus sesi (long-press / icon delete).
+ * Outlined Cards with leading Avatar, titleMedium session name, delete action.
  */
 
 import React, { useState, useCallback } from 'react';
 import { View, FlatList, StyleSheet, Alert } from 'react-native';
 import {
   Appbar,
-  List,
-  Divider,
-  Button,
+  Card,
+  Avatar,
   Text,
   IconButton,
+  Divider,
   useTheme,
 } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
@@ -51,49 +51,59 @@ export function SshScreenMD3({ navigation }: any) {
         <Appbar.Content title="SSH" subtitle={`${sessions.length} sesi`} />
       </Appbar.Header>
 
-      <View style={styles.content}>
-        <FlatList
-          data={sessions}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <>
-              <List.Item
-                title={item.nama}
-                titleStyle={{ fontWeight: '600' }}
-                description={`${item.username}@${item.host}:${item.port}`}
-                onPress={() => navigation.navigate('SshTerminal', { sessionId: item.id })}
-                right={() => (
-                  <IconButton
-                    icon="delete-outline"
-                    iconColor={theme.colors.error}
-                    size={22}
-                    onPress={() => handleDelete(item)}
-                  />
-                )}
-                style={styles.item}
-              />
-              <Divider />
-            </>
-          )}
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                Belum ada sesi SSH tersimpan.
-              </Text>
-              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
-                Tambah sesi baru untuk mulai.
-              </Text>
-            </View>
-          }
-        />
-      </View>
+      <FlatList
+        data={sessions}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        renderItem={({ item }) => (
+          <Card
+            mode="outlined"
+            style={styles.card}
+            onPress={() => navigation.navigate('SshTerminal', { sessionId: item.id })}
+          >
+            <Card.Title
+              title={item.nama}
+              titleVariant="titleMedium"
+              subtitle={`${item.username}@${item.host}:${item.port}`}
+              left={(props) => (
+                <Avatar.Icon
+                  {...props}
+                  icon="server"
+                  style={{ backgroundColor: theme.colors.primaryContainer }}
+                  color={theme.colors.onPrimaryContainer}
+                />
+              )}
+              right={(props) => (
+                <IconButton
+                  {...props}
+                  icon="delete-outline"
+                  iconColor={theme.colors.error}
+                  onPress={() => handleDelete(item)}
+                />
+              )}
+            />
+          </Card>
+        )}
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+              Belum ada sesi SSH tersimpan.
+            </Text>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
+              Tambah sesi baru untuk mulai.
+            </Text>
+          </View>
+        }
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flex: 1 },
-  item: { paddingVertical: 4 },
+  list: { padding: 12, paddingBottom: 96 },
+  card: {},
+  separator: { height: 8 },
   empty: { padding: 32, alignItems: 'center' },
 });

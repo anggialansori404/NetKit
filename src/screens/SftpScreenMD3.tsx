@@ -1,14 +1,14 @@
 /**
  * NetKit MD3 - SFTP Screen
- * Dengan hapus sesi.
+ * Outlined Cards with leading Avatar, titleMedium session name, delete action.
  */
 
 import React, { useState, useCallback } from 'react';
 import { View, FlatList, StyleSheet, Alert } from 'react-native';
 import {
   Appbar,
-  List,
-  Divider,
+  Card,
+  Avatar,
   Text,
   IconButton,
   useTheme,
@@ -50,47 +50,56 @@ export function SftpScreenMD3({ navigation }: any) {
         <Appbar.Content title="SFTP" subtitle={`${sessions.length} sesi`} />
       </Appbar.Header>
 
-      <View style={styles.content}>
-        <FlatList
-          data={sessions}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <>
-              <List.Item
-                title={item.nama}
-                titleStyle={{ fontWeight: '600' }}
-                description={`${item.username}@${item.host}:${item.port}`}
-                left={() => <List.Icon icon="folder-outline" />}
-                onPress={() => {}}
-                right={() => (
-                  <IconButton
-                    icon="delete-outline"
-                    iconColor={theme.colors.error}
-                    size={22}
-                    onPress={() => handleDelete(item)}
-                  />
-                )}
-                style={styles.item}
-              />
-              <Divider />
-            </>
-          )}
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                Belum ada sesi. Tambah sesi SSH dulu.
-              </Text>
-            </View>
-          }
-        />
-      </View>
+      <FlatList
+        data={sessions}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        renderItem={({ item }) => (
+          <Card
+            mode="outlined"
+            style={styles.card}
+            onPress={() => {}}
+          >
+            <Card.Title
+              title={item.nama}
+              titleVariant="titleMedium"
+              subtitle={`${item.username}@${item.host}:${item.port}`}
+              left={(props) => (
+                <Avatar.Icon
+                  {...props}
+                  icon="server-network"
+                  style={{ backgroundColor: theme.colors.tertiaryContainer }}
+                  color={theme.colors.onTertiaryContainer}
+                />
+              )}
+              right={(props) => (
+                <IconButton
+                  {...props}
+                  icon="delete-outline"
+                  iconColor={theme.colors.error}
+                  onPress={() => handleDelete(item)}
+                />
+              )}
+            />
+          </Card>
+        )}
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+              Belum ada sesi. Tambah sesi SSH dulu.
+            </Text>
+          </View>
+        }
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flex: 1 },
-  item: { paddingVertical: 4 },
+  list: { padding: 12, paddingBottom: 96 },
+  card: {},
+  separator: { height: 8 },
   empty: { padding: 32, alignItems: 'center' },
 });

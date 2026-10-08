@@ -123,7 +123,7 @@ export function ToolRunnerScreenMD3({ navigation, route }: any) {
         {output !== null && (
           <Card
             mode="contained"
-            style={[styles.resultCard, { backgroundColor: theme.colors.surfaceContainerHighest }]}
+            style={[styles.resultCard, { backgroundColor: theme.colors.elevation.level3 }]}
           >
             <Card.Content>
               <Text

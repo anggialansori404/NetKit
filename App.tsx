@@ -77,9 +77,9 @@ function MainTabs({ navigation }: any) {
           tabBarActiveTintColor: theme.colors.onSecondaryContainer,
           tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
           tabBarStyle: {
-            // M3 Navigation Bar: 80dp height, surfaceContainer background, no divider
+            // M3 Navigation Bar: 80dp height, elevation.level2 background, no divider
             height: 80,
-            backgroundColor: theme.colors.surfaceContainer,
+            backgroundColor: theme.colors.elevation.level2,
             borderTopWidth: 0,
             elevation: 0,
           },
@@ -116,8 +116,7 @@ function MainTabs({ navigation }: any) {
         // M3 FAB: primaryContainer fill, 16dp corner radius
         <FAB
           icon="plus"
-          style={[styles.fab, { bottom: 80 + insets.bottom }]}
-          containerColor={theme.colors.primaryContainer}
+          style={[styles.fab, { bottom: 80 + insets.bottom, backgroundColor: theme.colors.primaryContainer }]}
           color={theme.colors.onPrimaryContainer}
           onPress={handleFabPress}
         />
@@ -146,10 +145,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
-        <StatusBar
-          barStyle={isDark ? 'light-content' : 'dark-content'}
-          backgroundColor={theme.colors.surface}
-        />
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
         <NavigationContainer theme={navTheme}>
           <Stack.Navigator
             initialRouteName="MainTabs"

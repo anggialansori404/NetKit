@@ -72,7 +72,7 @@ export function KlienScreenMD3({ navigation }: any) {
         onChangeText={setSearch}
         style={[
           styles.search,
-          { backgroundColor: theme.colors.surfaceContainerHigh, borderRadius: 28 },
+          { backgroundColor: theme.colors.elevation.level3, borderRadius: 28 },
         ]}
         inputStyle={styles.searchInput}
         elevation={0}
@@ -152,7 +152,7 @@ export function KlienScreenMD3({ navigation }: any) {
             <Avatar.Icon
               size={56}
               icon={search || filter !== 'semua' ? 'magnify-close' : 'bank-outline'}
-              style={{ backgroundColor: theme.colors.surfaceContainerHigh }}
+              style={{ backgroundColor: theme.colors.elevation.level3 }}
               color={theme.colors.onSurfaceVariant}
             />
             <Text

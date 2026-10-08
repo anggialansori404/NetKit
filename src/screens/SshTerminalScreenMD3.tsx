@@ -196,6 +196,8 @@ const XTERM_HTML = `
 </html>
 `;
 
+const TerminalWebView = WebView as any;
+
 export function SshTerminalScreenMD3({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
   const session = route.params?.session;
@@ -460,7 +462,7 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#121212" />
+      <StatusBar barStyle="light-content" />
       <Appbar.Header style={styles.header}>
         <Appbar.BackAction color="#E0E0E0" onPress={confirmDisconnectAndLeave} />
         <Appbar.Content
@@ -513,7 +515,7 @@ export function SshTerminalScreenMD3({ navigation, route }: any) {
         </View>
       )}
 
-      <WebView
+      <TerminalWebView
         ref={webviewRef}
         source={{
           html: XTERM_HTML,

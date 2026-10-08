@@ -101,7 +101,7 @@ export function ClientDetailScreenMD3({ navigation, route }: any) {
         ) : null}
 
         {/* M3 Assist Chips — quick copy */}
-        <Card style={styles.card} mode="contained-tonal">
+        <Card style={styles.card} mode="contained">
           <Card.Content>
             <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
               SALIN CEPAT
